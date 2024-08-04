@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "otterseq"
+version = "0.0.2"
+description = "GWAS and genotype data analysis"
+authors = ["Your Name <you@example.com>"]
+license = "GPL-3.0 license"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+numpy = "^2.0.1"
+matplotlib = "^3.9.1"
+scipy = "^1.14.0"
+seaborn = "^0.13.2"
+pytest = "^8.3.2"
+pre-commit = "^3.8.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
