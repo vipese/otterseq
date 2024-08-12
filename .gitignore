@@ -14,3 +14,9 @@ Outputs/
 
 # Virtual environment
 env/
+
+# Cache
+__pycache__
+
+# PLINK
+plink2
