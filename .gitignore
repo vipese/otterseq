@@ -1,9 +1,16 @@
+# Folders
 Data/
+!tests/data
 Outputs/
+
+# Visual studio
 *.vscode/
+
 .Rhistory
 .vs
+
+# PCA (heavy files)
 *pca*
-Notes.txt
+
+# Virtual environment
 env/
-*.png
