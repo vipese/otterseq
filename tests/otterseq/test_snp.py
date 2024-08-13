@@ -65,14 +65,29 @@ def test_binarize(otter_snp: OtterSNP, filepath: str, outpath: str) -> None:
         (1000, False, None),
         ("filepath", "write", None),
         ("filepath", False, 1000),
-        ("filepath", True, None),
     ],
 )
-def test_fail_get_common_snp(
+def test_type_get_common_snp(
     otter_snp: OtterSNP, filepath: str, write: bool, outpath: str
 ):
     """Test fails of get_common_snp."""
     with pytest.raises(TypeError):
+        otter_snp.get_common_snp(filepath, write, outpath)
+
+
+@pytest.mark.parametrize(
+    argnames=["filepath", "write", "outpath"],
+    argvalues=[
+        ("filepath", True, None),
+    ],
+)
+def test_value_get_common_snp(
+    otter_snp: OtterSNP, filepath: str, write: bool, outpath: str
+):
+    """Test fails of get_common_snp."""
+    with pytest.raises(
+        ValueError, match="Write was set to True but no outpath was provided"
+    ):
         otter_snp.get_common_snp(filepath, write, outpath)
 
 
