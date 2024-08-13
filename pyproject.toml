@@ -51,12 +51,12 @@ skip_covered = true
 [tool.coverage.run]  # https://coverage.readthedocs.io/en/latest/config.html#run
 branch = true
 command_line = "--module pytest"
-data_file = "./.coverage"
+data_file = "./reports/.coverage"
 source = ["src"]
 relative_files = true
 
 [tool.mypy]  # https://mypy.readthedocs.io/en/latest/config_file.html
-junit_xml = "./mypy.xml"
+junit_xml = "./reports/mypy.xml"
 plugins = "pydantic.mypy"
 strict = true
 disallow_subclassing_any = false
