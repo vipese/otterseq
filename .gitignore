@@ -2,6 +2,7 @@
 Data/
 !tests/data
 Outputs/
+reports/
 
 # Visual studio
 *.vscode/
@@ -20,3 +21,6 @@ __pycache__
 
 # PLINK
 plink2
+
+# Cache
+*cache*
