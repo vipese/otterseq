@@ -1,0 +1,28 @@
+PLINK v2.00a6 M1 (6 Aug 2024)
+Options in effect:
+  --make-bed
+  --out toy
+  --pedmap toy
+
+Hostname: vicente.peris@idoven.ai-MacBookPro
+Working directory: /Users/vipese-idoven/Documents/projects/other/otterseq/tests/data
+Start time: Mon Aug 12 17:09:34 2024
+
+Random number seed: 1723475374
+65536 MiB RAM detected; reserving 32768 MiB for main workspace.
+Using up to 12 threads (change this with --threads).
+--pedmap: 5 variants in .map file.
+--pedmap: 10 samples present, genotypes extracted to toy-temporary.bed.smaj .
+Transposing sample-major .bed to toy-temporary.pgen , and setting major alleles
+to provisional-REF.
+Transpose complete.
+--pedmap: toy-temporary.pgen + toy-temporary.pvar + toy-temporary.psam written.
+.bed.smaj and .fam.tmp temporary files deleted.
+10 samples (0 females, 10 males; 10 founders) loaded from toy-temporary.psam.
+5 variants loaded from toy-temporary.pvar.
+1 binary phenotype loaded (10 cases, 0 controls).
+Writing toy.fam ... done.
+Writing toy.bim ... done.
+Writing toy.bed ... done.
+
+End time: Mon Aug 12 17:09:34 2024
