@@ -1,14 +1,14 @@
 PLINK v2.00a6 M1 (6 Aug 2024)
 Options in effect:
-  --make-bed
+  --make-pgen
   --out toy_2
   --pedmap toy_2
 
 Hostname: vicente.peris@idoven.ai-MacBookPro
 Working directory: /Users/vipese-idoven/Documents/projects/other/otterseq/tests/data
-Start time: Tue Aug 13 12:00:32 2024
+Start time: Wed Aug 14 11:35:25 2024
 
-Random number seed: 1723543232
+Random number seed: 1723628125
 65536 MiB RAM detected; reserving 32768 MiB for main workspace.
 Using up to 12 threads (change this with --threads).
 --pedmap: 5 variants in .map file.
@@ -23,8 +23,8 @@ written. .bed.smaj and .fam.tmp temporary files deleted.
 1 binary phenotype loaded (10 cases, 0 controls).
 Warning: Variants are not sorted by position.  Consider rerunning with the
 --sort-vars flag added to remedy this.
-Writing toy_2.fam ... done.
-Writing toy_2.bim ... done.
-Writing toy_2.bed ... done.
+Writing toy_2.psam ... done.
+Writing toy_2.pvar ... done.
+Writing toy_2.pgen ... done.
 
-End time: Tue Aug 13 12:00:32 2024
+End time: Wed Aug 14 11:35:25 2024
