@@ -17,17 +17,18 @@ class OtterSNP:
     def __init__(self) -> None:  # noqa: D107
         pass
 
-    def _read_snp_id_bim(self, filepath: str) -> list[str]:
-        """Read the rsIDs from a bim file.
+    def _read_snp_id_var(self, filepath: str) -> list[str]:
+        """Read the rsIDs from a .pvar file.
 
         Args:
-            filepath (str): Path to the .bim file.
+            filepath (str): Path to the .pvar file.
 
         Returns:
             list[str]: List of rsIDs.
         """
         with open(filepath) as in_file:
-            snps: list[str] = [row.split("\t")[1] for row in in_file]
+            snps: list[str] = [row.split("\t")[2] for row in in_file]
+        snps = snps[1:]  # Skip header
         return snps
 
     def check_multi_allelic(self, rs_ids: list[str]) -> None:
@@ -154,25 +155,25 @@ class OtterSNP:
             )
 
         # Parse .bim files
-        bim_files = [
+        var_files = [
             os.path.join(filepath, f)
             for f in os.listdir(filepath)
-            if f.endswith(".bim")
+            if f.endswith(".pvar")
         ]
-        if not bim_files:
+        if not var_files:
             raise FileNotFoundError(
-                "No .bim files found in the provided filepath."
+                "No .pvar files found in the provided filepath."
             )
 
         # Get first file to compute intersection iteratively
-        total_snps = self._read_snp_id_bim(bim_files[0])
+        total_snps = self._read_snp_id_var(var_files[0])
         self.check_multi_allelic(total_snps)
         total_snps = set(total_snps)
 
         # For the rest of the files, intersect with first file
-        n_files = len(bim_files)
+        n_files = len(var_files)
         for i in range(1, n_files):
-            file_snps = self._read_snp_id_bim(bim_files[i])
+            file_snps = self._read_snp_id_var(var_files[i])
             self.check_multi_allelic(file_snps)
             total_snps.intersection_update(set(file_snps))
         total_snps = list(total_snps)

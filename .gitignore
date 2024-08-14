@@ -21,6 +21,14 @@ __pycache__
 
 # PLINK
 plink2
+.pgen
+.psam
+.pvar
+.ped
+.map
+.bed
+.bim
+.fa,
 
 # Cache
 *cache*

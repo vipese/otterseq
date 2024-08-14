@@ -50,7 +50,7 @@ def test_binarize(otter_snp: OtterSNP, filepath: str, outpath: str) -> None:
 
     filenames = ["toy", "toy_2"] if filepath == "tests/data" else ["toy"]
     filenames = [os.path.join(outpath, fname) for fname in filenames]
-    suffixes = [".bed", ".fam", ".bim", ".log"]
+    suffixes = [".pgen", ".psam", ".pvar", ".log"]
     for suffix in suffixes:
         for filename in filenames:
             outfile_path = filename + suffix
