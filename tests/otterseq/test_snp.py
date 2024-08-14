@@ -45,6 +45,7 @@ def test_binarize(otter_snp: OtterSNP, filepath: str, outpath: str) -> None:
         filepath (str): Path to file or folder with files.
         outpath (str): Output path to write output.
     """
+    os.makedirs(outpath, exist_ok=True)
     otter_snp.binarize_files(filepath, outpath)
 
     filenames = ["toy", "toy_2"] if filepath == "tests/data" else ["toy"]
@@ -57,6 +58,7 @@ def test_binarize(otter_snp: OtterSNP, filepath: str, outpath: str) -> None:
                 outfile_path
             ), f"{outfile_path} was not correctly created"
             os.remove(outfile_path)
+    os.removedirs(outpath)
 
 
 @pytest.mark.parametrize(
@@ -124,6 +126,8 @@ def test_get_common_snp(
         - File path, no write.
         - File path and write.
     """
+    if outpath is not None:
+        os.makedirs(outpath, exist_ok=True)
     snps = otter_snp.get_common_snp(filepath, write, outpath)
     assert set(snps) == set(common_snps), "common_snps don't match expected"
     if outpath is not None:
@@ -134,3 +138,6 @@ def test_get_common_snp(
         assert set(file_snps) == set(
             common_snps
         ), "common snps in file don't match expected"
+    if outpath is not None:
+        os.remove(out_file)
+        os.removedirs(outpath)
