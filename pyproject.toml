@@ -51,12 +51,12 @@ skip_covered = true
 [tool.coverage.run]  # https://coverage.readthedocs.io/en/latest/config.html#run
 branch = true
 command_line = "--module pytest"
-data_file = "./.coverage"
+data_file = ".coverage"
 source = ["src"]
 relative_files = true
 
 [tool.mypy]  # https://mypy.readthedocs.io/en/latest/config_file.html
-junit_xml = "./mypy.xml"
+junit_xml = "mypy.xml"
 plugins = "pydantic.mypy"
 strict = true
 disallow_subclassing_any = false
@@ -76,7 +76,7 @@ warn_required_dynamic_aliases = true
 warn_untyped_fields = true
 
 [tool.pytest.ini_options]  # https://docs.pytest.org/en/latest/reference/reference.html#ini-options-ref
-addopts = "--color=yes --doctest-modules --exitfirst --failed-first --strict-config --strict-markers --verbosity=2 --junitxml=./pytest.xml"
+addopts = "--color=yes --doctest-modules --exitfirst --failed-first --strict-config --strict-markers --verbosity=2 --junitxml=pytest.xml"
 filterwarnings = ["error", "ignore::DeprecationWarning", "ignore::ResourceWarning"]
 testpaths = ["tests"]
 xfail_strict = true
