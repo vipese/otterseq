@@ -35,7 +35,6 @@ jobs:
       - name: Install dependencies with Poetry
         run: |
           poetry install
-          poetry shell
 
       - name: Build coverage file
         run: |
