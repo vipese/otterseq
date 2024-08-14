@@ -5,13 +5,13 @@ while [[ $# -gt 0 ]]; do
     key="$1"
 
     case $key in
-        --files)
-        FILES="$2"
+        --file)
+        file="$2"
         shift # past argument
         shift # past value
         ;;
         --outpath)
-        OUTPATH="$2"
+        outpath="$2"
         shift # past argument
         shift # past value
         ;;
@@ -23,11 +23,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 # For each file, binarize
-for file in "${FILES[@]}" ; do
-    filename=$(basename "$file")
-    outfile=${OUTPATH}/${filename}
-    plink2 --pedmap "${file}" --make-bed --out "${outfile}" --silent
-done 
+filename=$(basename "$file")
+outfile=${outpath}/${filename}
+plink2 --pedmap "${file}" --make-bed --out "${outfile}" --silent
 
 # Print 
 echo "Files binarized"
