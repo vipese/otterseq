@@ -24,10 +24,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Python 3.8
+      - name: Set up Python 3.10.12
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.10.12
+
+      - name: Install poetry
+        run: python -m pip install poetry
 
       - name: Install Poetry
         run: python -m pip install poetry==$POETRY_VERSION
@@ -43,5 +46,6 @@ jobs:
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@main
         with:
-          pytest-coverage-path: ./pytest-coverage.txt
-          junitxml-path: ./pytest.xml
+          pytest-coverage-path: ./reports/pytest-coverage.txt
+          pytest-xml-coverage-path: ./reports/
+          junitxml-path: ./reports/pytest.xml
