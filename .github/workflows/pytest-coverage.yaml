@@ -1,3 +1,7 @@
+
+env:
+  POETRY_VERSION: 1.6.0
+
 # This workflow will install dependencies, create coverage tests and run Pytest Coverage Comment
 # For more information see: https://github.com/MishaKav/pytest-coverage-comment/
 name: pytest-coverage-comment
@@ -25,15 +29,16 @@ jobs:
         with:
           python-version: 3.8
 
-      - name: Install dependencies
+      - name: Install Poetry
+        run: python -m pip install poetry==$POETRY_VERSION
+
+      - name: Install dependencies with Poetry
         run: |
-          python -m pip install --upgrade pip
-          pip install flake8 pytest pytest-cov
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          poetry install
 
       - name: Build coverage file
         run: |
-          pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=src tests/ | tee pytest-coverage.txt
+          poetry run pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=src/otterseq tests/ | tee pytest-coverage.txt
 
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@main
