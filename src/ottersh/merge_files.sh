@@ -1,17 +1,25 @@
 #!/bin/bash 
 
+# Default value
+prefix="merged_snps"
+
 # Parse named arguments
 while [[ $# -gt 0 ]]; do
     key="$1"
 
     case $key in
-        --file)
-        file="$2"
+        --merge-file)
+        merge_file="$2"
         shift # past argument
         shift # past value
         ;;
         --outpath)
         outpath="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        --prefix)
+        prefix="$2"
         shift # past argument
         shift # past value
         ;;
@@ -22,12 +30,5 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# For each file, binarize
-filename=$(basename "$file")
-outfile=${outpath}/${filename}
-plink2 --pedmap "${file}" --make-bed --out "${outfile}" --silent
-
-# Print 
-echo "Files binarized"
-
-
+outfile="${outpath}"/"${prefix}"
+plink --merge-list "${merge_file}" --make-bed --out "${outfile}" --silent
