@@ -24,7 +24,7 @@ def common_snps() -> list[str]:
 
 
 @pytest.fixture()
-def no_bim_directory() -> str:
+def no_files_directory() -> str:
     """Directory containing no bim files."""
     return "tests"
 

@@ -6,9 +6,9 @@ Options in effect:
 
 Hostname: vicente.peris@idoven.ai-MacBookPro
 Working directory: /Users/vipese-idoven/Documents/projects/other/otterseq/tests/data
-Start time: Tue Aug 13 12:00:32 2024
+Start time: Thu Aug 15 10:27:22 2024
 
-Random number seed: 1723543232
+Random number seed: 1723710442
 65536 MiB RAM detected; reserving 32768 MiB for main workspace.
 Using up to 12 threads (change this with --threads).
 --pedmap: 5 variants in .map file.
@@ -27,4 +27,4 @@ Writing toy_2.fam ... done.
 Writing toy_2.bim ... done.
 Writing toy_2.bed ... done.
 
-End time: Tue Aug 13 12:00:32 2024
+End time: Thu Aug 15 10:27:22 2024

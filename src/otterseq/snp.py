@@ -1,4 +1,11 @@
-"""."""
+"""otterseq.snp is a library used to manipulate binary PLINK files.
+
+Supported functionalities are:
+- Binarizing PLINK text files.
+- Compute common SNPs across .bim files.
+- Merging binary PLINK files.
+
+"""
 
 import logging
 import os
@@ -14,14 +21,18 @@ class OtterSNP:
     OtterSNP provides all the necessary to manipulate, and convert PLINK files.
     """
 
+    OTTER_SH_PATH = ottersh.__path__[0]
+    BINARIZE_SCRIPT = os.path.join(OTTER_SH_PATH, "binarize.sh")
+    MERGE_SCRIPT = os.path.join(OTTER_SH_PATH, "merge_files.sh")
+
     def __init__(self) -> None:  # noqa: D107
         pass
 
     def _read_snp_id_bim(self, filepath: str) -> list[str]:
-        """Read the rsIDs from a bim file.
+        """Read the rsIDs from a .pvar file.
 
         Args:
-            filepath (str): Path to the .bim file.
+            filepath (str): Path to the .pvar file.
 
         Returns:
             list[str]: List of rsIDs.
@@ -92,7 +103,7 @@ class OtterSNP:
         logging.info(f"{f} \n" for f in file_list)
 
         # Call bash script to binarize files in Data/GWAS
-        script_path = os.path.join(ottersh.__path__[0], "binarize.sh")
+        script_path = self.BINARIZE_SCRIPT
         for file in file_list:
             command = [
                 "bash",
@@ -135,7 +146,7 @@ class OtterSNP:
             FileNotFoundError: If there are no .bim files in filepath.
 
         Returns:
-            list[str]: _description_
+            list[str]: List of common SNPs.
         """
         # Enforce types
         if not isinstance(filepath, str):
@@ -187,3 +198,72 @@ class OtterSNP:
                     out_file.write(f"{snp}\n")
 
         return total_snps
+
+    def merge_files(
+        self,
+        filepath: str,
+        outpath: str | None = None,
+        prefix: str | None = None,
+    ) -> None:
+        """Merge binary PLINK files.
+
+        Given the path to a directory with binary PLINK1.9 files, compute
+        the list of files to merge, and pass it to plink to merge files into
+        a single binary PLINK file.
+
+        Args:
+            filepath (str): Path to directory with files to merge.
+            outpath (str | None, optional): Path to directory to store the
+                outputs. If None, uses `filepath`. Defaults to None.
+            prefix (str | None, optional): Prefix used to save the binary PLINK
+                files after merging. If None, defaults to "merged_snps".
+                Defaults to None.
+
+        Raises:
+            TypeError: If `filepath` is not of type str.
+            TypeError: If `outpath` is not None and not of type str.
+            TypeError: If `prefix` is not None and not of type str.
+            FileNotFoundError: If no `.bed` files were found in `filepath`.
+        """
+        if not isinstance(filepath, str):
+            raise TypeError(f"filepath not of type str. Got {type(filepath)}")
+        if outpath is not None and not isinstance(outpath, str):
+            raise TypeError(f"outpath not of type str. Got {type(outpath)}")
+        if prefix is not None and not isinstance(prefix, str):
+            raise TypeError(f"prefix not of type str. Got {type(prefix)}")
+
+        # Initialize paths
+        outpath = outpath or filepath
+        if not os.path.isdir(outpath):
+            os.makedirs(outpath)
+        merge_list_path = os.path.join(outpath, "merge_list.txt")
+
+        # Parse pgen files
+        pgen_files = [f for f in os.listdir(filepath) if f.endswith(".bed")]
+        if not pgen_files:
+            raise FileNotFoundError("No .bed files found in filepath")
+        files_prefix = [
+            os.path.join(filepath, f.split(".bed")[-2]) for f in pgen_files
+        ]
+
+        # Write merge list file
+        with open(merge_list_path, "w") as out_file:
+            for f in files_prefix:
+                out_file.write(f"{f}\n")
+
+        # Run script
+        script_path = self.MERGE_SCRIPT
+        command = [
+            "bash",
+            script_path,
+            "--merge-file",
+            merge_list_path,
+            "--outpath",
+            outpath,
+        ]
+        command = (
+            [*command, "--prefix", prefix] if prefix is not None else command
+        )
+        subprocess.run(
+            command, capture_output=True, text=True, check=False  # noqa: S603
+        )

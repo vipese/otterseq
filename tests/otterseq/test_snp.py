@@ -50,7 +50,7 @@ def test_binarize(otter_snp: OtterSNP, filepath: str, outpath: str) -> None:
 
     filenames = ["toy", "toy_2"] if filepath == "tests/data" else ["toy"]
     filenames = [os.path.join(outpath, fname) for fname in filenames]
-    suffixes = [".bed", ".fam", ".bim", ".log"]
+    suffixes = [".bed", ".bim", ".fam", ".log"]
     for suffix in suffixes:
         for filename in filenames:
             outfile_path = filename + suffix
@@ -77,6 +77,12 @@ def test_type_get_common_snp(
         otter_snp.get_common_snp(filepath, write, outpath)
 
 
+def test_get_common_snps_no_bim(otter_snp: OtterSNP, no_files_directory: str):
+    """Test get_common_snp passing directory with no .bim files."""
+    with pytest.raises(FileNotFoundError):
+        otter_snp.get_common_snp(filepath=no_files_directory)
+
+
 @pytest.mark.parametrize(
     argnames=["filepath", "write", "outpath"],
     argvalues=[
@@ -91,12 +97,6 @@ def test_value_get_common_snp(
         ValueError, match="Write was set to True but no outpath was provided"
     ):
         otter_snp.get_common_snp(filepath, write, outpath)
-
-
-def test_get_common_snps_no_bim(otter_snp: OtterSNP, no_bim_directory: str):
-    """Test get_common_snp passing directory with no .bim files."""
-    with pytest.raises(FileNotFoundError):
-        otter_snp.get_common_snp(filepath=no_bim_directory)
 
 
 def test_check_multi_allelic(  # noqa: D103
@@ -141,3 +141,64 @@ def test_get_common_snp(
     if outpath is not None:
         os.remove(out_file)
         os.removedirs(outpath)
+
+
+@pytest.mark.parametrize(
+    argnames=["filepath", "outpath", "prefix"],
+    argvalues=[
+        (1000, "outpath", None),
+        ("filepath", 1000, None),
+        ("filepath", "outpath", 1000),
+    ],
+)
+def test_type_merge_files(  # noqa: D103
+    otter_snp: OtterSNP,
+    filepath: str | int,
+    outpath: str | int,
+    prefix: None | int,
+):
+    with pytest.raises(TypeError):
+        otter_snp.merge_files(filepath, outpath, prefix)
+
+
+def test_type_merge_files_no_pgen(
+    otter_snp: OtterSNP, no_files_directory: str
+):
+    """Test get_common_snp passing directory with no .bim files."""
+    with pytest.raises(FileNotFoundError):
+        otter_snp.merge_files(filepath=no_files_directory)
+
+
+@pytest.mark.parametrize(
+    argnames=["filepath", "outpath", "prefix"],
+    argvalues=[
+        ("tests/data", None, None),
+        ("tests/data", "tests/output_test", None),
+        ("tests/data", None, "merged_pgen"),
+    ],
+)
+def test_merge(
+    otter_snp: OtterSNP, filepath: str, outpath: str | None, prefix: str | None
+):
+    """Test merge files.
+
+    Use cases:
+        - Only path to files.
+        - Path to files and output path with no prefix.
+        - Path to files and prefix but no output path.
+    """
+    otter_snp.merge_files(filepath, outpath, prefix)
+
+    path_to_list = os.path.join(outpath or filepath, "merge_list.txt")
+    assert os.path.isfile(
+        path_to_list
+    ), "merge_list.txt file not correctly created"
+    os.remove(path_to_list)
+
+    outpath = outpath or filepath
+    prefix = prefix or "merged_snps"
+    suffixes = [".bed", ".bim", ".fam", ".log"]
+    for suf in suffixes:
+        path_to_file = os.path.join(outpath, prefix + suf)
+        assert os.path.isfile(path_to_file), f"{path_to_file} was not created"
+        os.remove(path_to_file)
