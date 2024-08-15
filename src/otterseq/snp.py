@@ -1,4 +1,4 @@
-"""otterseq.snp is a library used to manipulate binary PLINK files.
+"""otterseq.snp is a module used to manipulate binary PLINK files.
 
 Supported functionalities are:
 - Binarizing PLINK text files.
