@@ -39,6 +39,16 @@ jobs:
         run: |
           poetry install
 
+      - name: Download and install PLINK1.9
+        run: |
+          wget https://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20240804.zip
+          unzip plink_linux_x86_64_20240804.zip
+          chmod +x plink
+          sudo mv plink /usr/local/bin/plink
+
+      - name: Verify PLINK1.0 installation
+        run: plink --version
+
       - name: Download and install PLINK2
         run: |
           wget https://s3.amazonaws.com/plink2-assets/plink2_linux_avx2_20240806.zip
