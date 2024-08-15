@@ -1,4 +1,4 @@
-"""otterseq unit tests."""
+"""OtterSNP unit tests."""
 
 import os
 

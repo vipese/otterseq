@@ -1,28 +1,22 @@
 PLINK v2.00a6 M1 (6 Aug 2024)
 Options in effect:
-  --make-bed
-  --out toy
-  --pedmap toy
+  --bfile tests/data/toy
+  --make-king-table
+  --out tests/data/toy
 
 Hostname: vicente.peris@idoven.ai-MacBookPro
-Working directory: /Users/vipese-idoven/Documents/projects/other/otterseq/tests/data
-Start time: Thu Aug 15 10:25:51 2024
+Working directory: /Users/vipese-idoven/Documents/projects/other/otterseq
+Start time: Thu Aug 15 12:22:43 2024
 
-Random number seed: 1723710351
+Random number seed: 1723717363
 65536 MiB RAM detected; reserving 32768 MiB for main workspace.
 Using up to 12 threads (change this with --threads).
---pedmap: 5 variants in .map file.
---pedmap: 10 samples present, genotypes extracted to toy-temporary.bed.smaj .
-Transposing sample-major .bed to toy-temporary.pgen , and setting major alleles
-to provisional-REF.
-Transpose complete.
---pedmap: toy-temporary.pgen + toy-temporary.pvar + toy-temporary.psam written.
-.bed.smaj and .fam.tmp temporary files deleted.
-10 samples (0 females, 10 males; 10 founders) loaded from toy-temporary.psam.
-5 variants loaded from toy-temporary.pvar.
+10 samples (0 females, 10 males; 10 founders) loaded from tests/data/toy.fam.
+5 variants loaded from tests/data/toy.bim.
 1 binary phenotype loaded (10 cases, 0 controls).
-Writing toy.fam ... done.
-Writing toy.bim ... done.
-Writing toy.bed ... done.
+--make-king-table pass 1/1: Scanning for rare variants... done.
+0 variants handled by initial scan (5 remaining).
+--make-king-table: 5 variants processed.
+Results written to tests/data/toy.kin0 .
 
-End time: Thu Aug 15 10:25:51 2024
+End time: Thu Aug 15 12:22:43 2024
