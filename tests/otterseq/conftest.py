@@ -1,7 +1,10 @@
 """Conftest file containing pytest fixture for unit test of otterseq."""
 
+import os
+
 import pytest
 
+from otterseq.qc import OtterQC
 from otterseq.snp import OtterSNP
 
 
@@ -9,6 +12,12 @@ from otterseq.snp import OtterSNP
 def otter_snp() -> OtterSNP:
     """OtterSNP mock class."""
     return OtterSNP()
+
+
+@pytest.fixture()
+def otter_qc() -> OtterQC:
+    """OtterQC mock class."""
+    return OtterQC()
 
 
 @pytest.fixture()
@@ -21,6 +30,24 @@ def common_snps() -> list[str]:
     ]
     common_snps.sort()
     return common_snps
+
+
+@pytest.fixture()
+def filepath() -> str:
+    """Path to test files."""
+    return "tests/data/"
+
+
+@pytest.fixture()
+def filename(filepath: str) -> str:
+    """Path fo PLINK1.9 file."""
+    return os.path.join(filepath, "toy")
+
+
+@pytest.fixture()
+def no_filename(filepath: str) -> str:
+    """Path to non existent PLINK1.9 file."""
+    return os.path.join(filepath, "no_file")
 
 
 @pytest.fixture()
