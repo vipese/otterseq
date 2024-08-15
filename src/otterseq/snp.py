@@ -1,4 +1,11 @@
-"""."""
+"""otterseq.snp is a library used to manipulate binary PLINK files.
+
+Supported functionalities are:
+- Binarizing PLINK text files.
+- Compute common SNPs across .bim files.
+- Merging binary PLINK files.
+
+"""
 
 import logging
 import os
@@ -21,7 +28,7 @@ class OtterSNP:
     def __init__(self) -> None:  # noqa: D107
         pass
 
-    def _read_snp_id_var(self, filepath: str) -> list[str]:
+    def _read_snp_id_bim(self, filepath: str) -> list[str]:
         """Read the rsIDs from a .pvar file.
 
         Args:
@@ -31,7 +38,7 @@ class OtterSNP:
             list[str]: List of rsIDs.
         """
         with open(filepath) as in_file:
-            snps: list[str] = [row.split("\t")[2] for row in in_file]
+            snps: list[str] = [row.split("\t")[1] for row in in_file]
         snps = snps[1:]  # Skip header
         return snps
 
@@ -70,7 +77,6 @@ class OtterSNP:
             )
 
         # Handle file path to directory or file (including with suffix .ped)
-        # TODO: Improve check of .ped files
         ped_files: list[str]
         if os.path.isdir(filepath):
             ped_files = [
@@ -141,7 +147,7 @@ class OtterSNP:
             FileNotFoundError: If there are no .bim files in filepath.
 
         Returns:
-            list[str]: _description_
+            list[str]: List of common SNPs.
         """
         # Enforce types
         if not isinstance(filepath, str):
@@ -163,22 +169,22 @@ class OtterSNP:
         var_files = [
             os.path.join(filepath, f)
             for f in os.listdir(filepath)
-            if f.endswith(".pvar")
+            if f.endswith(".bim")
         ]
         if not var_files:
             raise FileNotFoundError(
-                "No .pvar files found in the provided filepath."
+                "No .bim files found in the provided filepath."
             )
 
         # Get first file to compute intersection iteratively
-        total_snps = self._read_snp_id_var(var_files[0])
+        total_snps = self._read_snp_id_bim(var_files[0])
         self.check_multi_allelic(total_snps)
         total_snps = set(total_snps)
 
         # For the rest of the files, intersect with first file
         n_files = len(var_files)
         for i in range(1, n_files):
-            file_snps = self._read_snp_id_var(var_files[i])
+            file_snps = self._read_snp_id_bim(var_files[i])
             self.check_multi_allelic(file_snps)
             total_snps.intersection_update(set(file_snps))
         total_snps = list(total_snps)
@@ -200,7 +206,26 @@ class OtterSNP:
         outpath: str | None = None,
         prefix: str | None = None,
     ) -> None:
-        """."""
+        """Merge binary PLINK files.
+
+        Given the path to a directory with binary PLINK1.9 files, compute
+        the list of files to merge, and pass it to plink to merge files into
+        a single binary PLINK file.
+
+        Args:
+            filepath (str): Path to directory with files to merge.
+            outpath (str | None, optional): Path to directory to store the
+                outputs. If None, uses `filepath`. Defaults to None.
+            prefix (str | None, optional): Prefix used to save the binary PLINK
+                files after merging. If None, defaults to "merged_snps".
+                Defaults to None.
+
+        Raises:
+            TypeError: If `filepath` is not of type str.
+            TypeError: If `outpath` is not None and not of type str.
+            TypeError: If `prefix` is not None and not of type str.
+            FileNotFoundError: If no `.bed` files were found in `filepath`.
+        """
         if not isinstance(filepath, str):
             raise TypeError(f"filepath not of type str. Got {type(filepath)}")
         if outpath is not None and not isinstance(outpath, str):
