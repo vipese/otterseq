@@ -39,7 +39,6 @@ class OtterSNP:
         """
         with open(filepath) as in_file:
             snps: list[str] = [row.split("\t")[1] for row in in_file]
-        snps = snps[1:]  # Skip header
         return snps
 
     def check_multi_allelic(self, rs_ids: list[str]) -> None:
@@ -166,25 +165,25 @@ class OtterSNP:
             )
 
         # Parse .bim files
-        var_files = [
+        bim_files = [
             os.path.join(filepath, f)
             for f in os.listdir(filepath)
             if f.endswith(".bim")
         ]
-        if not var_files:
+        if not bim_files:
             raise FileNotFoundError(
                 "No .bim files found in the provided filepath."
             )
 
         # Get first file to compute intersection iteratively
-        total_snps = self._read_snp_id_bim(var_files[0])
+        total_snps = self._read_snp_id_bim(bim_files[0])
         self.check_multi_allelic(total_snps)
         total_snps = set(total_snps)
 
         # For the rest of the files, intersect with first file
-        n_files = len(var_files)
+        n_files = len(bim_files)
         for i in range(1, n_files):
-            file_snps = self._read_snp_id_bim(var_files[i])
+            file_snps = self._read_snp_id_bim(bim_files[i])
             self.check_multi_allelic(file_snps)
             total_snps.intersection_update(set(file_snps))
         total_snps = list(total_snps)
