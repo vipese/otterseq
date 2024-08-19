@@ -41,18 +41,18 @@ jobs:
 
       - name: Download and install PLINK1.9
         run: |
-          wget https://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20240804.zip
-          unzip plink_linux_x86_64_20240804.zip
+          wget https://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20240818.zip
+          unzip plink_linux_x86_64_20240818.zip
           chmod +x plink
           sudo mv plink /usr/local/bin/plink
 
-      - name: Verify PLINK1.0 installation
+      - name: Verify PLINK1.9 installation
         run: plink --version
 
       - name: Download and install PLINK2
         run: |
-          wget https://s3.amazonaws.com/plink2-assets/plink2_linux_avx2_20240806.zip
-          unzip plink2_linux_avx2_20240806.zip
+          wget https://s3.amazonaws.com/plink2-assets/plink2_linux_avx2_20240818.zip
+          unzip plink2_linux_avx2_20240818.zip
           chmod +x plink2
           sudo mv plink2 /usr/local/bin/plink2
 

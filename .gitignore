@@ -28,11 +28,12 @@ plink2
 .map
 .bed
 .bim
-.fa,
+.fam
+.log
 
 # Cache
 *cache*
 
 # Pytest
 pytest.xml
-coverage
+*coverage*
