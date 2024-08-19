@@ -39,6 +39,7 @@ class OtterQC:
         Raises:
             TypeError: If `filename` is not of type str.
             TypeError: If `threshold` is not of type int | float.
+            FileNotFoundError: If `.bed` are found in the provided `filename`.
             ValueError: If `threshold` is not in between 0 and 1 (included).
         """
         if not isinstance(filename, str):
