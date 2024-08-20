@@ -23,6 +23,11 @@ while [[ $# -gt 0 ]]; do
         shift # past argument
         shift # past value
         ;;
+        --extract)
+        extract="$2"
+        shift # past argument
+        shift # past value
+        ;;
         *)    # unknown option
         echo "Unknown option $key"
         exit 1
@@ -31,4 +36,4 @@ while [[ $# -gt 0 ]]; do
 done
 
 outfile="${outpath}"/"${prefix}"
-plink --merge-list "${merge_file}" --make-bed --out "${outfile}" --silent
+plink --allow-no-sex --merge-list "${merge_file}" ${extract:+--extract "${extract}"} --make-bed --out "${outfile}" --silent
