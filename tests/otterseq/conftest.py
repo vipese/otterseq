@@ -33,6 +33,22 @@ def common_snps() -> list[str]:
 
 
 @pytest.fixture()
+def all_snps() -> list[str]:
+    """All unique rsIDs in toy files."""
+    all_snps = [
+        "rs0001",
+        "rs0002",
+        "rs0003",
+        "rs0004",
+        "rs0005",
+        "rs0006",
+        "rs0007",
+    ]
+    all_snps.sort()
+    return all_snps
+
+
+@pytest.fixture()
 def filepath() -> str:
     """Path to test files."""
     return "tests/data/"
