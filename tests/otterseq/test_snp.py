@@ -1,7 +1,9 @@
 """OtterSNP unit tests."""
 
 import os
+from typing import Any
 
+import pandas as pd
 import pytest
 
 from otterseq.errors import MultiAllelicError
@@ -61,6 +63,13 @@ def test_binarize(otter_snp: OtterSNP, filepath: str, outpath: str) -> None:
     os.removedirs(outpath)
 
 
+def test_check_multi_allelic(  # noqa: D103
+    otter_snp: OtterSNP, multiallelic_rsids: list[str]
+) -> None:
+    with pytest.raises(MultiAllelicError):
+        otter_snp.check_multi_allelic(multiallelic_rsids)
+
+
 @pytest.mark.parametrize(
     argnames=["filepath", "write", "outpath"],
     argvalues=[
@@ -69,7 +78,7 @@ def test_binarize(otter_snp: OtterSNP, filepath: str, outpath: str) -> None:
         ("filepath", False, 1000),
     ],
 )
-def test_type_get_common_snp(
+def test_type_error_get_common_snp(
     otter_snp: OtterSNP, filepath: str, write: bool, outpath: str
 ):
     """Test fails of get_common_snp."""
@@ -77,7 +86,9 @@ def test_type_get_common_snp(
         otter_snp.get_common_snp(filepath, write, outpath)
 
 
-def test_get_common_snps_no_bim(otter_snp: OtterSNP, no_files_directory: str):
+def test_fnf__error_get_common_snps(
+    otter_snp: OtterSNP, no_files_directory: str
+):
     """Test get_common_snp passing directory with no .bim files."""
     with pytest.raises(FileNotFoundError):
         otter_snp.get_common_snp(filepath=no_files_directory)
@@ -89,7 +100,7 @@ def test_get_common_snps_no_bim(otter_snp: OtterSNP, no_files_directory: str):
         ("filepath", True, None),
     ],
 )
-def test_value_get_common_snp(
+def test_value_error_get_common_snp(
     otter_snp: OtterSNP, filepath: str, write: bool, outpath: str
 ):
     """Test fails of get_common_snp."""
@@ -97,13 +108,6 @@ def test_value_get_common_snp(
         ValueError, match="Write was set to True but no outpath was provided"
     ):
         otter_snp.get_common_snp(filepath, write, outpath)
-
-
-def test_check_multi_allelic(  # noqa: D103
-    otter_snp: OtterSNP, multiallelic_rsids: list[str]
-) -> None:
-    with pytest.raises(MultiAllelicError):
-        otter_snp.check_multi_allelic(multiallelic_rsids)
 
 
 @pytest.mark.parametrize(
@@ -170,16 +174,43 @@ def test_type_merge_files_no_pgen(
 
 
 @pytest.mark.parametrize(
-    argnames=["filepath", "outpath", "prefix"],
+    argnames=["args", "expected_snps"],
     argvalues=[
-        ("tests/data", None, None),
-        ("tests/data", "tests/output_test", None),
-        ("tests/data", None, "merged_pgen"),
+        (
+            {
+                "filepath": "tests/data",
+            },
+            pytest.lazy_fixture("common_snps"),
+        ),
+        (
+            {"filepath": "tests/data", "outpath": "tests/output_test"},
+            pytest.lazy_fixture("common_snps"),
+        ),
+        (
+            {"filepath": "tests/data", "prefix": "merged_pgen"},
+            pytest.lazy_fixture("common_snps"),
+        ),
+        (
+            {
+                "filepath": "tests/data",
+                "prefix": "merged_pgen",
+                "only_common": False,
+            },
+            pytest.lazy_fixture("all_snps"),
+        ),
+        (
+            {
+                "filepath": "tests/data",
+                "prefix": "merged_pgen",
+                "only_common": True,
+            },
+            pytest.lazy_fixture("common_snps"),
+        ),
     ],
 )
 def test_merge(
-    otter_snp: OtterSNP, filepath: str, outpath: str | None, prefix: str | None
-):
+    otter_snp: OtterSNP, args: dict[str, Any], expected_snps: list[str]
+) -> None:
     """Test merge files.
 
     Use cases:
@@ -187,18 +218,54 @@ def test_merge(
         - Path to files and output path with no prefix.
         - Path to files and prefix but no output path.
     """
-    otter_snp.merge_files(filepath, outpath, prefix)
+    otter_snp.merge_files(**args)
 
+    filepath = args["filepath"]
+    outpath = args.get("outpath", None)
+    prefix = args.get("prefix", None)
+    only_common = args.get("only_common", True)
+
+    # Check merge list
     path_to_list = os.path.join(outpath or filepath, "merge_list.txt")
     assert os.path.isfile(
         path_to_list
     ), "merge_list.txt file not correctly created"
+    merge_data = pd.read_csv(path_to_list, names=["file"])
+    assert set(merge_data.file) == {
+        "tests/data/toy",
+        "tests/data/toy_2",
+    }, "Merged files do not correspond with expected"
     os.remove(path_to_list)
 
+    # Check common snps
+    if only_common is True:
+        path_to_common = os.path.join(outpath or filepath, "common_snps.txt")
+        common_snps = pd.read_csv(path_to_common, names=["rsid"])
+        assert os.path.isfile(
+            path_to_common
+        ), "Common snps not correctly created"
+        assert set(common_snps.rsid) == set(
+            expected_snps
+        ), "Expected SNPs does not match common snps."
+        os.remove(path_to_common)
+
+    # Check outputs
     outpath = outpath or filepath
     prefix = prefix or "merged_snps"
-    suffixes = [".bed", ".bim", ".fam", ".log"]
+    suffixes = [".bed", ".fam", ".log"]
     for suf in suffixes:
         path_to_file = os.path.join(outpath, prefix + suf)
         assert os.path.isfile(path_to_file), f"{path_to_file} was not created"
         os.remove(path_to_file)
+
+    # Check variants
+    bim_file_path = os.path.join(outpath, prefix + ".bim")
+    bim_file = pd.read_csv(
+        bim_file_path,
+        sep=r"\s+",
+        names=["chr", "rsid", "pos", "pos_chr", "var_1", "var_2"],
+    )
+    assert set(bim_file.rsid) == set(
+        expected_snps
+    ), "Expected SNPs does not match bim file."
+    os.remove(bim_file_path)

@@ -136,7 +136,7 @@ class OtterSNP:
             write (bool, optional): True to write the common SNPs into a file.
                 Defaults to False.
             outpath (str | None, optional): Path to the directory where the output
-                should be written. Requires write = True. Default
+                should be written. Requires write = True. Default to None.
 
         Raises:
             TypeError: If filepath is not of type str.
@@ -203,7 +203,8 @@ class OtterSNP:
         self,
         filepath: str,
         outpath: str | None = None,
-        prefix: str | None = None,
+        prefix: str = "merged_snps",
+        only_common: bool = True,
     ) -> None:
         """Merge binary PLINK files.
 
@@ -218,6 +219,8 @@ class OtterSNP:
             prefix (str | None, optional): Prefix used to save the binary PLINK
                 files after merging. If None, defaults to "merged_snps".
                 Defaults to None.
+            only_common (bool): True to extract only common variants across files.
+                Defaults to True.
 
         Raises:
             TypeError: If `filepath` is not of type str.
@@ -229,8 +232,12 @@ class OtterSNP:
             raise TypeError(f"filepath not of type str. Got {type(filepath)}")
         if outpath is not None and not isinstance(outpath, str):
             raise TypeError(f"outpath not of type str. Got {type(outpath)}")
-        if prefix is not None and not isinstance(prefix, str):
+        if not isinstance(prefix, str):
             raise TypeError(f"prefix not of type str. Got {type(prefix)}")
+        if not isinstance(only_common, bool):
+            raise TypeError(
+                f"only_common not of type bol. Got {type(only_common)}"
+            )
 
         # Initialize paths
         outpath = outpath or filepath
@@ -251,6 +258,13 @@ class OtterSNP:
             for f in files_prefix:
                 out_file.write(f"{f}\n")
 
+        # Write common snps to file
+        if only_common is True:
+            _ = self.get_common_snp(
+                filepath=filepath, outpath=outpath, write=True
+            )
+        common_snps_path = os.path.join(outpath, "common_snps.txt")
+
         # Run script
         script_path = self.MERGE_SCRIPT
         command = [
@@ -263,6 +277,11 @@ class OtterSNP:
         ]
         command = (
             [*command, "--prefix", prefix] if prefix is not None else command
+        )
+        command = (
+            [*command, "--extract", common_snps_path]
+            if only_common is True
+            else command
         )
         subprocess.run(
             command, capture_output=True, text=True, check=False  # noqa: S603
