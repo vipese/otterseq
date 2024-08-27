@@ -6,7 +6,6 @@ from typing import Any
 import pandas as pd
 import pytest
 
-from otterseq.errors import MultiAllelicError
 from otterseq.snp import OtterSNP
 
 
@@ -14,7 +13,9 @@ from otterseq.snp import OtterSNP
     argnames=["filepath", "outpath"],
     argvalues=[(1000, "outpath"), ("filepath", 1000)],
 )
-def test_fail_binarize(otter_snp: OtterSNP, filepath: str, outpath: str):
+def test_fail_binarize(
+    otter_snp: OtterSNP, filepath: str, outpath: str
+) -> None:
     """Test correct raise of errors in OtterSNP.
 
     Args:
@@ -63,13 +64,6 @@ def test_binarize(otter_snp: OtterSNP, filepath: str, outpath: str) -> None:
     os.removedirs(outpath)
 
 
-def test_check_multi_allelic(  # noqa: D103
-    otter_snp: OtterSNP, multiallelic_rsids: list[str]
-) -> None:
-    with pytest.raises(MultiAllelicError):
-        otter_snp.check_multi_allelic(multiallelic_rsids)
-
-
 @pytest.mark.parametrize(
     argnames=["filepath", "write", "outpath"],
     argvalues=[
@@ -80,7 +74,7 @@ def test_check_multi_allelic(  # noqa: D103
 )
 def test_type_error_get_common_snp(
     otter_snp: OtterSNP, filepath: str, write: bool, outpath: str
-):
+) -> None:
     """Test fails of get_common_snp."""
     with pytest.raises(TypeError):
         otter_snp.get_common_snp(filepath, write, outpath)
@@ -88,7 +82,7 @@ def test_type_error_get_common_snp(
 
 def test_fnf__error_get_common_snps(
     otter_snp: OtterSNP, no_files_directory: str
-):
+) -> None:
     """Test get_common_snp passing directory with no .bim files."""
     with pytest.raises(FileNotFoundError):
         otter_snp.get_common_snp(filepath=no_files_directory)
@@ -102,7 +96,7 @@ def test_fnf__error_get_common_snps(
 )
 def test_value_error_get_common_snp(
     otter_snp: OtterSNP, filepath: str, write: bool, outpath: str
-):
+) -> None:
     """Test fails of get_common_snp."""
     with pytest.raises(
         ValueError, match="Write was set to True but no outpath was provided"
@@ -123,7 +117,7 @@ def test_get_common_snp(
     write: bool,
     outpath: str | None,
     common_snps: list[str],
-):
+) -> None:
     """Test get_common snp.
 
     Use cases:
@@ -160,14 +154,14 @@ def test_type_merge_files(  # noqa: D103
     filepath: str | int,
     outpath: str | int,
     prefix: None | int,
-):
+) -> None:
     with pytest.raises(TypeError):
         otter_snp.merge_files(filepath, outpath, prefix)
 
 
 def test_type_merge_files_no_pgen(
     otter_snp: OtterSNP, no_files_directory: str
-):
+) -> None:
     """Test get_common_snp passing directory with no .bim files."""
     with pytest.raises(FileNotFoundError):
         otter_snp.merge_files(filepath=no_files_directory)
@@ -180,15 +174,15 @@ def test_type_merge_files_no_pgen(
             {
                 "filepath": "tests/data",
             },
-            pytest.lazy_fixture("common_snps"),
+            pytest.lazy_fixture("common_snps"),  # type: ignore[operator]
         ),
         (
             {"filepath": "tests/data", "outpath": "tests/output_test"},
-            pytest.lazy_fixture("common_snps"),
+            pytest.lazy_fixture("common_snps"),  # type: ignore[operator]
         ),
         (
             {"filepath": "tests/data", "prefix": "merged_pgen"},
-            pytest.lazy_fixture("common_snps"),
+            pytest.lazy_fixture("common_snps"),  # type: ignore[operator]
         ),
         (
             {
@@ -196,7 +190,7 @@ def test_type_merge_files_no_pgen(
                 "prefix": "merged_pgen",
                 "only_common": False,
             },
-            pytest.lazy_fixture("all_snps"),
+            pytest.lazy_fixture("all_snps"),  # type: ignore[operator]
         ),
         (
             {
@@ -204,7 +198,7 @@ def test_type_merge_files_no_pgen(
                 "prefix": "merged_pgen",
                 "only_common": True,
             },
-            pytest.lazy_fixture("common_snps"),
+            pytest.lazy_fixture("common_snps"),  # type: ignore[operator]
         ),
     ],
 )

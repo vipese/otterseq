@@ -55,9 +55,27 @@ def filepath() -> str:
 
 
 @pytest.fixture()
+def filepath_qc() -> str:
+    """Path to test files."""
+    return "tests/data_qc/"
+
+
+@pytest.fixture()
 def filename(filepath: str) -> str:
     """Path fo PLINK1.9 file."""
     return os.path.join(filepath, "toy")
+
+
+@pytest.fixture()
+def filename_dup(filepath_qc: str) -> str:
+    """Path fo PLINK1.9 file."""
+    return os.path.join(filepath_qc, "toy")
+
+
+@pytest.fixture()
+def filename_qc(filepath_qc: str) -> str:
+    """Path fo PLINK1.9 file."""
+    return os.path.join(filepath_qc, "toy_qc")
 
 
 @pytest.fixture()
@@ -73,7 +91,19 @@ def no_files_directory() -> str:
 
 
 @pytest.fixture()
-def multiallelic_rsids(common_snps: list[str]):
+def multiallelic_rsids(common_snps: list[str]) -> list[str]:
     """Multiallelic (duplicated rsIDs) common snps."""
     multiallelic_rsids = [*common_snps, common_snps[0]]
     return multiallelic_rsids
+
+
+@pytest.fixture()
+def duplicated_variants() -> list[str]:
+    """Duplicated variants based on coordinates and allele codes."""
+    return ["rs0001_dup1", "rs0001_dup2", "rs0002_dup1"]
+
+
+@pytest.fixture()
+def duplicated_rsid() -> list[str]:
+    """Duplicated variants based on coordinates and allele codes."""
+    return ["rs0001", "rs0002"]
