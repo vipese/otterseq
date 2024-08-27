@@ -12,7 +12,7 @@ import os
 import subprocess
 
 import ottersh
-from otterseq.errors import MultiAllelicError
+from otterseq.utils import check_multi_allelic
 
 
 class OtterSNP:
@@ -40,18 +40,6 @@ class OtterSNP:
         with open(filepath) as in_file:
             snps: list[str] = [row.split("\t")[1] for row in in_file]
         return snps
-
-    def check_multi_allelic(self, rs_ids: list[str]) -> None:
-        """Check if there are multi-allelic (duplicated rsIDs) variants.
-
-        Args:
-            rs_ids (list[str]): List of rsIDs.
-
-        Raises:
-            MultiAllelicError: If there are duplicated rsIDs.
-        """
-        if len(rs_ids) > len(set(rs_ids)):
-            raise MultiAllelicError("Multi-allelic variants found in file.")
 
     def binarize_files(self, filepath: str, outpath: str) -> None:
         """Binarize PLINK raw files to binary PLINK files.
@@ -177,14 +165,14 @@ class OtterSNP:
 
         # Get first file to compute intersection iteratively
         total_snps = self._read_snp_id_bim(bim_files[0])
-        self.check_multi_allelic(total_snps)
+        check_multi_allelic(total_snps)
         total_snps = set(total_snps)
 
         # For the rest of the files, intersect with first file
         n_files = len(bim_files)
         for i in range(1, n_files):
             file_snps = self._read_snp_id_bim(bim_files[i])
-            self.check_multi_allelic(file_snps)
+            check_multi_allelic(file_snps)
             total_snps.intersection_update(set(file_snps))
         total_snps = list(total_snps)
         total_snps.sort()

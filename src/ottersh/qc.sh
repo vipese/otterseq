@@ -1,61 +1,58 @@
-#!bin/bash 
+#!/bin/bash
 
-###################################################################
-#Script Name	: binarize.sh                                                                                            
-#Description	: Perform Quality Control of .bed files through PLINK                                                                      
-#Args           : None                                                                                           
-#Author       	: Vicente Peris Sempere                                                
-#Email         	: vipese@stanford.edu                                        
-###################################################################
 
-# Read from settings
-    # PLINK files
-GWASDATA=$(jq -r '.plinkFiles.GWAS' settings.json)
-GWASDATAQC=$(jq -r '.plinkFiles.GWASQC' settings.json)
-PREFIX=$(jq -r '.plinkFiles.prefix' settings.json)
-    # Variables for QC
-IBD_ID=$(jq -r '.file.excludeID_IBD' settings.json)
-PHENOMISS=$(jq -r '.phenomiss' settings.json)
-GENOMISS=$(jq -r '.genomiss' settings.json)
-MAF=$(jq -r '.maf' settings.json)
-DupSNPs=$(jq -r '.file.DupSNPs' settings.json)
-DupIIDs=$(jq -r '.file.DupIIDs' settings.json)
-TripSNPS=$(jq -r '.file.TripSNPs' settings.json)
+# Parse named arguments
+while [[ $# -gt 0 ]]; do
+    key="$1"
 
-# Parse duplicate variants (based on position and allele codes)
-./bin/plink --bfile ${GWASDATA}${PREFIX} --list-duplicate-vars suppress-first \
-    --allow-no-sex --out temp > temp
-awk '{print $4}' temp.dupvar > $DupSNPs
-rm -r temp*
+    case $key in
+        --bfile)
+        bfile="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        --outpath)
+        outpath="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        --maf)
+        maf="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        --geno-miss)
+        geno_miss="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        --indv-miss)
+        indv_miss="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        --rm-vars)
+        rm_vars="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        --rm-indv)
+        rm_indv="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        *)    # unknown option
+        echo "Unknown option $key"
+        exit 1
+        ;;
+    esac
+done
 
-# Parse duplicated  FIDs
-awk '{seen[$1,$2]++}' ${GWASDATA}${PREFIX}.fam > $DupIIDs
-
-# Concat IBD remove and DupSNPS
-cp $IBD_ID temp_remove
-awk '{print $0}' $DupIIDs >> temp_remove
-
-# Perform Quality control - Remove duplicated variants
-./bin/plink --bfile ${GWASDATA}${PREFIX} --remove temp_remove --exclude $DupSNPs\
-    --allow-no-sex \
-    --maf $MAF --geno $GENOMISS --mind $PHENOMISS \
-    --make-bed --out gwastempFilt > gwastempFilt
-rm temp_remove
-
-# Parse triplicated variants / multiallelic variants
-./bin/plink --bfile gwastempFilt --list-duplicate-vars\
-    --allow-no-sex --out temp > temp
-awk '{print $4}' temp.dupvar > $TripSNPS
-rm -r temp*
-
-# Remove triplicated / multiallelic variants
-./bin/plink --bfile gwastempFilt --exclude $TripSNPS\
-    --allow-no-sex \
-    --make-bed --out ${GWASDATAQC}${PREFIX}_QC >>${GWASDATAQC}${PREFIX}_QC
-rm -r gwastemp*
-
-# Clean .bim file to remove commas (PCA)
-awk '{
-    gsub(/\,/, ":", $2); print $0
-    }' ${GWASDATAQC}${PREFIX}_QC.bim > temp.bim
-mv temp.bim ${GWASDATAQC}${PREFIX}_QC.bim
+plink --bfile "${bfile}" \
+      $([ -n "${geno_miss}" ] && echo "--geno ${geno_miss}") \
+      $([ -n "${indv_miss}" ] && echo "--mind ${indv_miss}") \
+      $([ -n "${maf}" ] && echo "--maf ${maf}") \
+      $([ -n "${rm_indv}" ] && echo "--remove ${rm_indv}") \
+      $([ -n "${rm_vars}" ] && echo "--exclude ${rm_vars}") \
+      --make-bed \
+      --out "${outpath}"
