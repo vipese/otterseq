@@ -12,6 +12,7 @@ numpy = "^2.0.1"
 matplotlib = "^3.9.1"
 scipy = "^1.14.0"
 seaborn = "^0.13.2"
+beartype = "^0.18.5"
 
 [tool.poetry.group.test.dependencies]  # https://python-poetry.org/docs/master/managing-dependencies/
 absolufy-imports = "^0.3.1"
