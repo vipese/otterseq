@@ -1,0 +1,16 @@
+PLINK v1.90b7.3 64-bit (4 Aug 2024)
+Options in effect:
+  --bfile tests/data_qc/toy_qc
+  --geno 0.1
+  --make-bed
+  --out test
+
+Hostname: vicente.peris@idoven.ai-MacBookPro
+Working directory: /Users/vipese-idoven/Documents/projects/other/otterseq/tests/data_qc
+Start time: Sun Aug 25 18:21:27 2024
+
+Random number seed: 1724602887
+65536 MB RAM detected; reserving 32768 MB for main workspace.
+Error: Failed to open tests/data_qc/toy_qc.bed.
+
+End time: Sun Aug 25 18:21:27 2024

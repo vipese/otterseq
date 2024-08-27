@@ -84,3 +84,8 @@ repos:
         language: system
         files: pyproject.toml
         pass_filenames: false
+      - id: mypy
+        name: mypy
+        entry: mypy
+        language: system
+        types: [python]
