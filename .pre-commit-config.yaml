@@ -89,4 +89,3 @@ repos:
         entry: mypy
         language: system
         types: [python]
-        args: ['--no-junit-xml']  

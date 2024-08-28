@@ -68,6 +68,12 @@ def filepath_qc() -> str:
 
 
 @pytest.fixture()
+def filepath_pca() -> str:
+    """Path to test PCA files."""
+    return "tests/data_pca/"
+
+
+@pytest.fixture()
 def filename(filepath: str) -> str:
     """Path fo PLINK1.9 file."""
     return os.path.join(filepath, "toy")
@@ -83,6 +89,12 @@ def filename_dup(filepath_qc: str) -> str:
 def filename_qc(filepath_qc: str) -> str:
     """Path fo PLINK1.9 file."""
     return os.path.join(filepath_qc, "toy_qc")
+
+
+@pytest.fixture()
+def filename_pca(filepath_pca: str) -> str:
+    """Path fo PLINK1.9 file."""
+    return os.path.join(filepath_pca, "toy")
 
 
 @pytest.fixture()

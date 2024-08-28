@@ -89,6 +89,7 @@ def test_duplicate_vars(
     ), "Duplicated variants do not match expected"
 
     os.remove(path_dup_list)
+    os.remove(basename + ".log")
 
 
 @pytest.mark.parametrize(
@@ -113,6 +114,8 @@ def test_duplicate_rsid(
 
     basename = os.path.splitext(filename_dup)[0]
     path_dup_list = basename + ".rmdup.mismatch"
+    path_rm_dup_list = basename + ".rmdup.list"
+    path_log = basename + ".log"
     assert os.path.isfile(
         path_dup_list
     ), "Duplicated list of rsids not created"
@@ -121,6 +124,8 @@ def test_duplicate_rsid(
     ), "Duplicated variants do not match expected"
 
     os.remove(path_dup_list)
+    os.remove(path_rm_dup_list)
+    os.remove(path_log)
 
 
 @pytest.mark.parametrize(
@@ -244,6 +249,8 @@ def test_qc(  # noqa: D103
     if exclude_indvs is not None:
         rm_indv_file = outpath + ".rmindv"
         os.remove(rm_indv_file)
+    if os.path.isfile("test.irem"):
+        os.remove("test.irem")
     if exclude_vars is not None:
         rm_indv_file = outpath + ".rmvars"
         os.remove(rm_indv_file)

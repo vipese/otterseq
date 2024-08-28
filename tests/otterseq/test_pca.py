@@ -3,6 +3,7 @@ import os
 from typing import Any
 
 import pandas as pd
+import plotly.graph_objects as go
 import pytest
 from beartype.roar import BeartypeCallHintParamViolation
 
@@ -74,3 +75,12 @@ def test_pca(
 
     os.remove(eigenval_path)
     os.remove(eigenvec_path)
+
+
+def test_pca_plot(otter_pca: OtterPCA, filename_pca: str) -> None:
+    """."""
+    fig = otter_pca.plot_pca(filename=filename_pca, plot=False)
+
+    assert isinstance(
+        fig, go.Figure
+    ), f"Output not of type go.Figure. Got{type(fig)}"
