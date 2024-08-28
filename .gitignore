@@ -10,9 +10,6 @@ reports/
 .Rhistory
 .vs
 
-# PCA (heavy files)
-*pca*
-
 # Virtual environment
 env/
 

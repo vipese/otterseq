@@ -4,6 +4,8 @@ Supported functionalities are:
 - Inheritance By Descent (IBD)
 - Computation of duplicated variants by coordinates and allele codes.
 - Computation of duplicated variant rsIDs.
+- Quality Control, encompassing MAF, missing genotyping and individual rates,
+    exclusion of variants and individuals filtering.
 """
 import os
 import subprocess
@@ -25,7 +27,7 @@ class OtterQC:
     _QC_SCRIPT = os.path.join(_OTTER_SH_PATH, "qc.sh")
     _SUFFIXES: ClassVar[list[str]] = [".bim", ".bed", ".fam"]
 
-    def __init__(self):  # noqa: D107
+    def __init__(self) -> None:  # noqa: D107
         pass
 
     def ibd(
@@ -137,14 +139,14 @@ class OtterQC:
             command, capture_output=True, text=True, check=False  # noqa: S603
         )
 
-        dup_vars = pd.read_csv(
+        dup_vars_df = pd.read_csv(
             basename + ".dupvar",
             usecols=[3],
             names=["rsid"],
             sep="\t",
             header=0,
         )
-        dup_vars = dup_vars.rsid.str.split().explode().to_list()
+        dup_vars: list[str] = dup_vars_df.rsid.str.split().explode().to_list()
         return dup_vars
 
     @beartype
@@ -193,10 +195,11 @@ class OtterQC:
             command, capture_output=True, text=True, check=False  # noqa: S603
         )
 
-        dup_rsid = pd.read_csv(
+        dup_rsid_df = pd.read_csv(
             basename + ".rmdup.mismatch", usecols=[0], names=["rsid"]
         )
-        return dup_rsid.rsid.to_list()
+        dup_rsid: list[str] = dup_rsid_df.rsid.to_list()
+        return dup_rsid
 
     @beartype
     def extract_duplicate_individuals(self, filename: str) -> pd.DataFrame:
