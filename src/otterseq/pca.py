@@ -80,7 +80,7 @@ class OtterPCA:
             plot (bool, optional): If True, plots the PCA. Defaults to True.
 
         Raises:
-            FileNotFoundError: If `filename`.eigenvc does not exist.
+            FileNotFoundError: If `filename`.eigenvec does not exist.
 
         Returns:
             go.Figure: plotly Figure which can be plotted with `.show()`
