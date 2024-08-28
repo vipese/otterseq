@@ -249,6 +249,8 @@ def test_qc(  # noqa: D103
     if exclude_indvs is not None:
         rm_indv_file = outpath + ".rmindv"
         os.remove(rm_indv_file)
+    if os.path.isfile("test.irem"):
+        os.remove("test.irem")
     if exclude_vars is not None:
         rm_indv_file = outpath + ".rmvars"
         os.remove(rm_indv_file)
