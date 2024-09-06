@@ -1,9 +1,19 @@
-"""."""
+"""Operations module for performing various genetic data analyses.
 
+This module contains the OtterOps class, which provides methods for
+running logistic regression and other genetic data analysis operations.
+It utilizes external tools like PLINK and interfaces with other
+otterseq modules to process genetic data files and perform statistical
+analyses on genomic datasets.
+"""
+
+import math
 import os
 import subprocess
 from typing import ClassVar, Literal
 
+import pandas as pd
+import plotly.express as px
 from beartype import beartype
 
 import ottersh
@@ -94,3 +104,57 @@ class OtterOps:
         # Remove temporary files
         os.remove(temp_covars_path)
         os.remove(temp_pheno_path)
+
+    @beartype
+    def plot_manhattan(self, filename: str) -> None:
+        """Plot a Manhattan plot for GWAS results.
+
+        Args:
+            filename (str): Path to the input file containing GWAS results.
+                            The file should have a '.assoc.logistic' extension.
+
+        Raises:
+            FileNotFoundError: If the input file with '.assoc.logistic' extension is not found.
+        """
+        if not filename.endswith(self._LOGISTIC_SUFFIX):
+            filename += self._LOGISTIC_SUFFIX
+
+        if not os.path.exists(filename):
+            raise FileNotFoundError(f"File {filename} not found")
+
+        # Read and transform data
+        log_df = pd.read_csv(filename, delimiter=r"\s+", na_values=["NA"])
+        log_df = log_df[(log_df.TEST == "ADD") & (~log_df.P.isna())]
+        log_df = log_df[["CHR", "SNP", "BP", "P"]]
+        log_df = log_df.rename(
+            columns={
+                "CHR": "chromosome",
+                "SNP": "snp",
+                "BP": "position",
+                "P": "pvalue",
+            }
+        )
+
+        # Compute log of p-value for plot
+        log_df = log_df.sort_values(["chromosome", "position"])
+        log_df["-log10(pvalue)"] = log_df.pvalue.apply(
+            lambda x: -math.log10(x)
+        )
+
+        # Define alternating colors for chromosomes
+        colors = ["#1f77b4", "#ff7f0e"]  # Blue and orange
+        color_map = {str(i): colors[i % 2] for i in range(1, 23)}
+        color_map.update(
+            {"X": "#2ca02c", "Y": "#d62728"}
+        )  # Green for X, Red for Y
+
+        # Plot Manhattan plot
+        fig = px.scatter(
+            log_df,
+            x="position",
+            y="-log10(pvalue)",
+            color="chromosome",
+            title="Manhattan Plot",
+            labels={"pvalue": "p-value"},
+        )
+        fig.show()
