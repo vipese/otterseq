@@ -1,4 +1,11 @@
-"""."""
+"""Principal Component Analysis (PCA) module for genetic data.
+
+This module provides the OtterPCA class for computing and visualizing PCA
+results on PLINK binary files. It includes functionality for reading .fam
+and .eigenvec files, performing PCA, plotting results, and matching
+case-control samples based on PCA output.
+"""
+
 import logging
 import os
 import subprocess
@@ -12,6 +19,7 @@ from beartype import beartype
 from scipy.spatial import distance_matrix
 
 import ottersh
+from otterseq.utils import read_fam_file, read_pca_file
 
 
 class OtterPCA:
@@ -24,91 +32,6 @@ class OtterPCA:
 
     def __init__(self) -> None:  # noqa: D107
         pass
-
-    @beartype
-    def read_fam_file(
-        self, filename: str, vars_to_string: bool = True
-    ) -> pl.DataFrame:
-        """Read .fam file in Polars format.
-
-        Args:
-            filename (str): Path to the file without suffix (e.g. "data/toy"),
-                or with suffix (e.g. "data/toy.fam").
-            vars_to_string (bool, optional): True to convert the `sex` and
-                `pheno` variables into string versions. Defaults to True.
-
-        Raises:
-            FileNotFoundError: If the .fam file was not found.
-
-        Returns:
-            pl.DataFrame: Polars DataFrame with the .fam file content.
-        """
-        if not filename.endswith(".fam"):
-            filename += ".fam"
-
-        if not os.path.isfile(filename):
-            raise FileNotFoundError(f"{filename} not found.")
-
-        fam_df = pl.read_csv(
-            filename,
-            has_header=False,
-            separator=" ",
-            new_columns=[
-                "fid",
-                "iid",
-                "father_id",
-                "mother_id",
-                "sex",
-                "pheno",
-            ],
-        )
-
-        if vars_to_string:
-            fam_df = fam_df.with_columns(
-                pl.when(pl.col("sex") == 2)
-                .then(pl.lit("female"))
-                .when(pl.col("sex") == 1)
-                .then(pl.lit("male"))
-                .otherwise(pl.lit("unknown"))
-                .alias("sex_str")
-            )
-            fam_df = fam_df.with_columns(
-                pl.when(pl.col("pheno") == 2)
-                .then(pl.lit("control"))
-                .when(pl.col("pheno") == 1)
-                .then(pl.lit("case"))
-                .otherwise(pl.lit("unknown"))
-                .alias("pheno_str")
-            )
-
-        return fam_df
-
-    @beartype
-    def read_pca_file(self, filename: str) -> pl.DataFrame:
-        """Read eigenvalues file from PCA output.
-
-        Args:
-            filename (str): Path to the filename without suffix (e.g., "data/toy"),
-                or with suffix (e.g., "data/toy.eigenvec").
-
-        Raises:
-            FileNotFoundError: If the .eigenvec file does not exist.
-
-        Returns:
-            pl.DataFrame: Polars DataFrame with .eigenvec content.
-        """
-        if not filename.endswith(self._PCA_SUFFIX):
-            filename += self._PCA_SUFFIX
-
-        if not os.path.isfile(filename):
-            raise FileNotFoundError(f"{filename} not found.")
-
-        pca_df = pl.read_csv(filename, has_header=False, separator=" ")
-        pca_df.columns = ["fid", "iid"] + [
-            f"pc{i}" for i in range(1, len(pca_df.columns) - 1)
-        ]
-
-        return pca_df
 
     @beartype
     def pca(
@@ -186,9 +109,9 @@ class OtterPCA:
             )
             fam_df = None
         else:
-            fam_df = self.read_fam_file(fam_filepath, vars_to_string=True)
+            fam_df = read_fam_file(fam_filepath, vars_to_string=True)
 
-        pca_df = self.read_pca_file(pca_filepath)
+        pca_df = read_pca_file(pca_filepath)
 
         if fam_df is not None:
             pca_df = pca_df.join(
@@ -280,8 +203,8 @@ class OtterPCA:
                 f"{pca_file} was not found. match_pca requires both .fam and .eigenvec files."
             )
 
-        pca_df = self.read_pca_file(filename=filename)
-        fam_df = self.read_fam_file(filename=filename, vars_to_string=False)
+        pca_df = read_pca_file(filename=filename)
+        fam_df = read_fam_file(filename=filename, vars_to_string=False)
         merged_df = pca_df.join(
             other=fam_df[["fid", "iid", "pheno"]],
             on=["fid", "iid"],
@@ -325,7 +248,7 @@ class OtterPCA:
             matched_controls = set(controls["fid_iid"][pcs_idx])
 
         matched_controls_list = list(matched_controls)
-        merged_df_matched = merged_df.filter(
+        merged_df_matched: pl.DataFrame = merged_df.filter(
             (pl.col("fid_iid").is_in(matched_controls_list))
             | (pl.col("pheno") == 2)
         )
