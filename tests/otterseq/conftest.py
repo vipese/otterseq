@@ -4,6 +4,7 @@ import os
 
 import pytest
 
+from otterseq.operations import OtterOps
 from otterseq.pca import OtterPCA
 from otterseq.qc import OtterQC
 from otterseq.snp import OtterSNP
@@ -25,6 +26,12 @@ def otter_qc() -> OtterQC:
 def otter_pca() -> OtterPCA:
     """OtterPCA mock class."""
     return OtterPCA()
+
+
+@pytest.fixture()
+def otter_ops() -> OtterOps:
+    """OtterOps mock class."""
+    return OtterOps()
 
 
 @pytest.fixture()

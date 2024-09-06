@@ -140,7 +140,19 @@ def test_match_case_controls(
     ), f"Expected {expected_controls} controls, but got {actual_controls}"
 
     # Check if all cases are included
-    fam_df = otter_pca.read_fam_file(filename_pca, vars_to_string=False)
+    fam_df = pl.read_csv(
+        filename_pca + ".fam",
+        has_header=False,
+        separator=" ",
+        new_columns=[
+            "fid",
+            "iid",
+            "father_id",
+            "mother_id",
+            "sex",
+            "pheno",
+        ],
+    )
     total_cases = len(fam_df.filter(pl.col("pheno") == 2))
     matched_cases = len(matched_df.filter(pl.col("pheno") == 2))
     assert (
@@ -202,7 +214,7 @@ def test_plot_pca(
     assert mock_show.called == expected_fig_show
 
     # Check if the figure contains the correct data
-    all_points = set(float)
+    all_points = set()  # type: ignore[var-annotated]
     for trace in fig.data:
         all_points.update(zip(trace.x, trace.y, strict=False))
 
