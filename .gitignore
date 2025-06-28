@@ -12,6 +12,7 @@ reports/
 
 # Virtual environment
 env/
+.venv/
 
 # Cache
 __pycache__

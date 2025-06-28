@@ -13,12 +13,24 @@ all:
 	$(MAKE) install
 	$(MAKE) install_plink2
 
+activate:
+	source ./.venv/bin/activate
+
+install-dev:
+	@echo "Installing development dependencies..."
+	uv sync --extra dev
+
+install-test:
+	@echo "Installing test dependencies..."
+	uv sync --extra test
+
+install-all:
+	@echo "Installing all dependencies..."
+	uv sync --extra test --extra dev
+	uv run pre-commit install
+
 install:
-	@echo "Installing..."
-	poetry shell
-	poetry lock
-	poetry install
-	poetry run pre-commit install
+	make install-all
 
 install_plink2:
 	@if [ "$(UNAME_S)" = "Linux" ]; then \
