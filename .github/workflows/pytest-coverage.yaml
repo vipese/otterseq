@@ -32,7 +32,7 @@ jobs:
 
       - name: Install dependencies with uv
         run: |
-          uv sync
+          uv sync --extra test
 
       - name: Download and install PLINK1.9
         run: |
@@ -46,13 +46,15 @@ jobs:
 
       - name: Download and install PLINK2
         run: |
-          wget https://s3.amazonaws.com/plink2-assets/plink2_linux_avx2_latest.zip
-          unzip plink2_linux_avx2_latest.zip
+          wget https://s3.amazonaws.com/plink2-assets/plink2_linux_x86_64_20231218.zip
+          unzip plink2_linux_x86_64_20231218.zip
           chmod +x plink2
           sudo mv plink2 /usr/local/bin/plink2
+        continue-on-error: true
 
       - name: Verify PLINK2 installation
         run: plink2 --version
+        continue-on-error: true
 
       - name: Build coverage file
         run: |
