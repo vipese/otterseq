@@ -1,0 +1,30 @@
+PLINK v1.90b7.3 64-bit (4 Aug 2024)
+Options in effect:
+  --file toy_qc
+  --make-bed
+  --out toy_qc
+
+Hostname: vicente.peris@idoven.ai-MacBookPro
+Working directory: /Users/vipese-idoven/Documents/projects/other/otterseq/tests/data_qc
+Start time: Sun Aug 25 18:02:10 2024
+
+Random number seed: 1724601730
+65536 MB RAM detected; reserving 32768 MB for main workspace.
+Scanning .ped file... done.
+Warning: Variant 4 (post-sort) triallelic; setting rarest alleles missing.
+Warning: Variant 7 (post-sort) quadallelic; setting rarest alleles missing.
+Performing single-pass .bed write (7 variants, 10 people).
+--file: toy_qc-temporary.bed + toy_qc-temporary.bim + toy_qc-temporary.fam
+written.
+7 variants loaded from .bim file.
+10 people (10 males, 0 females) loaded from .fam.
+10 phenotype values loaded from .fam.
+Using 1 thread (no multithreaded calculations invoked).
+Before main variant filters, 10 founders and 0 nonfounders present.
+Calculating allele frequencies... done.
+Total genotyping rate is 0.957143.
+7 variants and 10 people pass filters and QC.
+Among remaining phenotypes, 10 are cases and 0 are controls.
+--make-bed to toy_qc.bed + toy_qc.bim + toy_qc.fam ... done.
+
+End time: Sun Aug 25 18:02:10 2024

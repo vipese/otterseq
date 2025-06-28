@@ -1,9 +1,37 @@
+# Folders
 Data/
+!tests/data
 Outputs/
+reports/
+
+# Visual studio
 *.vscode/
+
 .Rhistory
 .vs
-*pca*
-Notes.txt
+
+# Virtual environment
 env/
-*.png
+.venv/
+
+# Cache
+__pycache__
+
+# PLINK
+plink2
+.pgen
+.psam
+.pvar
+.ped
+.map
+.bed
+.bim
+.fam
+*.log
+
+# Cache
+*cache*
+
+# Pytest
+pytest.xml
+*coverage*

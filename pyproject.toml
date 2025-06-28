@@ -1,0 +1,106 @@
+[project]
+name = "otterseq"
+version = "0.0.2"
+description = "GWAS and genotype data analysis"
+authors = [
+    {name = "Vicente Peris Sempere", email = "vsempereperis@gmail.com"}
+]
+license = {text = "GPL-3.0"}
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=2.0.1",
+    "matplotlib>=3.9.1",
+    "scipy>=1.14.0",
+    "seaborn>=0.13.2",
+    "beartype>=0.18.5",
+    "polars-lts-cpu>=1.5.0",
+    "plotly>=5.23.0",
+    "nbformat>=5.10.4",
+    "pytest-mock>=3.14.0",
+    "pandas>=2.3.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "absolufy-imports>=0.3.1",
+    "black[jupyter]>=22.12.0",
+    "commitizen>=2.39.1",
+    "coverage[toml]>=7.0.3",
+    "poethepoet>=0.17.1",
+    "pre-commit>=2.21.0",
+    "pytest>=7.2.0",
+    "pytest-clarity>=1.0.1",
+    "pytest-mock>=3.10.0",
+    "pytest-xdist>=3.1.0",
+    "pytest-cov>=4.1.0",
+    "pytest-html>=4.1.1",
+    # "pytest-lazy-fixture>=0.6.3",  # Temporarily disabled due to compatibility issues
+    "ruff>=0.1.3",
+    "safety>=2.3.5",
+    "shellcheck-py>=0.9.0",
+    "typeguard>=2.13.3",
+    "mypy>=1.2.0",
+    "pydantic>=1.10.7",
+]
+dev = [
+    "ipykernel>=6.29.5",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.black]  # https://black.readthedocs.io/en/stable/usage_and_configuration/the_basics.html#configuration-via-a-file
+line-length = 79
+target-version = ["py310"]
+
+[tool.coverage.report]  # https://coverage.readthedocs.io/en/latest/config.html#report
+fail_under = 50
+precision = 1
+show_missing = true
+skip_covered = true
+
+[tool.coverage.run]  # https://coverage.readthedocs.io/en/latest/config.html#run
+branch = true
+command_line = "--module pytest"
+data_file = ".coverage"
+source = ["src"]
+relative_files = true
+
+[tool.mypy]  # https://mypy.readthedocs.io/en/latest/config_file.html
+junit_xml = "mypy.xml"
+plugins = "pydantic.mypy"
+strict = true
+disallow_subclassing_any = false
+disallow_untyped_decorators = false
+ignore_missing_imports = true
+pretty = true
+show_column_numbers = true
+show_error_codes = true
+show_error_context = true
+warn_unreachable = true
+disable_error_code = ["call-overload"]
+
+[tool.pydantic-mypy]  # https://pydantic-docs.helpmanual.io/mypy_plugin/#configuring-the-plugin
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+warn_untyped_fields = true
+
+[tool.pytest.ini_options]  # https://docs.pytest.org/en/latest/reference/reference.html#ini-options-ref
+addopts = "--color=yes --doctest-modules --exitfirst --failed-first --strict-config --strict-markers --verbosity=2 --junitxml=pytest.xml"
+filterwarnings = ["error", "ignore::DeprecationWarning", "ignore::ResourceWarning"]
+testpaths = ["tests"]
+xfail_strict = true
+pythonpath = ['.']
+
+[tool.ruff]  # https://github.com/charliermarsh/ruff
+fix = true
+ignore-init-module-imports = true
+line-length = 79
+select = ["A", "B", "BLE", "C4", "C90", "D", "DTZ", "E", "ERA", "F", "I", "ISC", "N", "PGH", "PIE", "PLC", "PLE", "PLR", "PLW", "PT", "RET", "RUF", "S", "SIM", "T10", "T20", "TID", "UP", "W", "YTT"]
+ignore = ["E501", "RET504", "S101", "PLR2004", "RUF100", "D407", "D406", "B008", "PLR0913", "N999", "D203", "D213", "D413"]
+unfixable = ["ERA001", "F401", "F841", "T201", "T203"]
+src = ["src", "tests"]
+target-version = "py310"
