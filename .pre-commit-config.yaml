@@ -1,6 +1,6 @@
 # https://pre-commit.com
 default_install_hook_types: [commit-msg, pre-commit]
-default_stages: [commit, manual]
+default_stages: [pre-commit, manual]
 fail_fast: true
 repos:
   - repo: meta
@@ -78,12 +78,6 @@ repos:
         args: [--check-sourced]
         language: system
         types: [shell]
-      - id: poetry-check
-        name: poetry check
-        entry: poetry check
-        language: system
-        files: pyproject.toml
-        pass_filenames: false
       - id: mypy
         name: mypy
         entry: mypy
