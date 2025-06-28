@@ -36,4 +36,4 @@ while [[ $# -gt 0 ]]; do
 done
 
 outfile="${outpath}"/"${prefix}"
-plink --allow-no-sex --merge-list "${merge_file}" ${extract:+--extract "${extract}"} --make-bed --out "${outfile}" --silent
+bin/plink --allow-no-sex --merge-list "${merge_file}" ${extract:+--extract "${extract}"} --make-bed --out "${outfile}" --silent

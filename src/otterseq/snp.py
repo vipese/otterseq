@@ -11,6 +11,9 @@ import logging
 import os
 import subprocess
 
+import polars as pl
+from beartype import beartype
+
 import ottersh
 from otterseq.utils import check_multi_allelic
 
@@ -25,22 +28,34 @@ class OtterSNP:
     BINARIZE_SCRIPT = os.path.join(OTTER_SH_PATH, "binarize.sh")
     MERGE_SCRIPT = os.path.join(OTTER_SH_PATH, "merge_files.sh")
 
-    def __init__(self) -> None:  # noqa: D107
-        pass
-
+    @beartype
     def _read_snp_id_bim(self, filepath: str) -> list[str]:
-        """Read the rsIDs from a .pvar file.
+        """Read the rsIDs from a .bim file.
 
         Args:
-            filepath (str): Path to the .pvar file.
+            filepath (str): Path to the .bim file.
 
         Returns:
             list[str]: List of rsIDs.
         """
-        with open(filepath) as in_file:
-            snps: list[str] = [row.split("\t")[1] for row in in_file]
-        return snps
+        try:
+            # Check if file is empty
+            if os.path.getsize(filepath) == 0:
+                return []
 
+            # Read .bim file with polars (tab-separated, no header)
+            df = pl.read_csv(
+                filepath,
+                has_header=False,
+                separator="\t",
+                new_columns=["chrom", "rsid", "cm", "pos", "a1", "a2"],
+            )
+            return df["rsid"].to_list()
+        except Exception as e:
+            logging.error(f"Error reading {filepath}: {e}")
+            raise
+
+    @beartype
     def binarize_files(self, filepath: str, outpath: str) -> None:
         """Binarize PLINK raw files to binary PLINK files.
 
@@ -54,15 +69,6 @@ class OtterSNP:
             TypeError: If outpath if not of type str.
             FileNotFoundError: If the .ped file if not found.
         """
-        if not isinstance(filepath, str):
-            raise TypeError(
-                f"filepath must be of type str. Got {type(filepath)}"
-            )
-        if not isinstance(outpath, str):
-            raise TypeError(
-                f"filepath must be of type str. Got {type(filepath)}"
-            )
-
         # Handle file path to directory or file (including with suffix .ped)
         ped_files: list[str]
         if os.path.isdir(filepath):
@@ -101,13 +107,114 @@ class OtterSNP:
                 "--outpath",
                 outpath,
             ]
-            subprocess.run(
-                command,  # noqa: S603
+            subprocess.run(  # noqa: S603
+                command,
                 capture_output=True,
                 text=True,
                 check=False,
             )
 
+    @beartype
+    def _validate_get_common_snp_params(
+        self, write: bool, outpath: str | None
+    ) -> None:
+        """Validate parameters for get_common_snp method.
+
+        Args:
+            write (bool): Whether to write output to file.
+            outpath (str | None): Output path for writing.
+
+        Raises:
+            ValueError: If write is True but outpath is None.
+        """
+        if write is True and outpath is None:
+            raise ValueError(
+                "Write was set to True but no outpath was provided"
+            )
+
+    @beartype
+    def _process_bim_files(self, filepath: str) -> list[set[str]]:
+        """Process .bim files and extract SNP sets.
+
+        Args:
+            filepath (str): Path to directory containing .bim files.
+
+        Returns:
+            list[set[str]]: List of SNP ID sets from each file.
+
+        Raises:
+            FileNotFoundError: If no .bim files found in directory.
+            Exception: If error reading any file.
+        """
+        # Parse .bim files
+        bim_files = [
+            os.path.join(filepath, f)
+            for f in os.listdir(filepath)
+            if f.endswith(".bim")
+        ]
+        if not bim_files:
+            raise FileNotFoundError(
+                "No .bim files found in the provided filepath."
+            )
+
+        # Read all .bim files and extract SNP IDs
+        snp_sets: list[set[str]] = []
+        for bim_file in bim_files:
+            try:
+                if os.path.getsize(bim_file) == 0:
+                    logging.warning(f"Empty .bim file: {bim_file}.")
+                    snp_ids = []
+                else:
+                    df = pl.read_csv(
+                        bim_file,
+                        has_header=False,
+                        separator="\t",
+                        new_columns=["chrom", "rsid", "cm", "pos", "a1", "a2"],
+                    )
+                    snp_ids = df["rsid"].to_list()
+
+                if not snp_ids:
+                    logging.warning(f"No SNPs found in {bim_file}.")
+                    continue
+
+                # Check for multi-allelic variants
+                check_multi_allelic(snp_ids)
+
+                # Add SNP IDs to set
+                snp_sets.append(set(snp_ids))
+
+            except Exception as e:
+                logging.error(f"Error reading {bim_file}: {e}")
+                raise
+
+        return snp_sets
+
+    @beartype
+    def _find_common_snps(self, snp_sets: list[set[str]]) -> list[str]:
+        """Find common SNPs across all SNP sets.
+
+        Args:
+            snp_sets (list[set[str]]): List of SNP ID sets.
+
+        Returns:
+            list[str]: Sorted list of common SNPs.
+        """
+        if not snp_sets:
+            return []
+
+        # Start with the first set and intersect with all others
+        common_snps = snp_sets[0]
+        for snp_set in snp_sets[1:]:
+            common_snps = common_snps.intersection(snp_set)
+
+            # Early termination if no common SNPs remain
+            if not common_snps:
+                logging.warning("No common SNPs found across all files")
+                break
+
+        return sorted(common_snps)
+
+    @beartype
     def get_common_snp(
         self, filepath: str, write: bool = False, outpath: str | None = None
     ) -> list[str]:
@@ -127,66 +234,34 @@ class OtterSNP:
                 should be written. Requires write = True. Default to None.
 
         Raises:
-            TypeError: If filepath is not of type str.
-            TypeError: If write is not of type bool.
-            TypeError: If outpath is not of type str
-            ValueError: If write is False and outpath is not None.
             FileNotFoundError: If there are no .bim files in filepath.
 
         Returns:
             list[str]: List of common SNPs.
         """
-        # Enforce types
-        if not isinstance(filepath, str):
-            raise TypeError(
-                f"filepath must be of type str. Got {type(filepath)}"
-            )
-        if not isinstance(write, bool):
-            raise TypeError(f"write must be of type bool. Got {type(write)}")
-        if outpath and not isinstance(outpath, str):
-            raise TypeError(
-                f"outpath must be of type str. Got {type(outpath)}"
-            )
+        # Enforce logic
         if write is True and outpath is None:
             raise ValueError(
                 "Write was set to True but no outpath was provided"
             )
 
-        # Parse .bim files
-        bim_files = [
-            os.path.join(filepath, f)
-            for f in os.listdir(filepath)
-            if f.endswith(".bim")
-        ]
-        if not bim_files:
-            raise FileNotFoundError(
-                "No .bim files found in the provided filepath."
-            )
+        # Process .bim files and extract SNP sets
+        snp_sets = self._process_bim_files(filepath)
 
-        # Get first file to compute intersection iteratively
-        total_snps = self._read_snp_id_bim(bim_files[0])
-        check_multi_allelic(total_snps)
-        total_snps = set(total_snps)
+        # Find common SNPs
+        common_snps_list = self._find_common_snps(snp_sets)
 
-        # For the rest of the files, intersect with first file
-        n_files = len(bim_files)
-        for i in range(1, n_files):
-            file_snps = self._read_snp_id_bim(bim_files[i])
-            check_multi_allelic(file_snps)
-            total_snps.intersection_update(set(file_snps))
-        total_snps = list(total_snps)
-        total_snps.sort()
-
-        # Write to file
+        # Write to file if requested
         if write is True and outpath is not None:
             with open(
                 os.path.join(outpath, "common_snps.txt"), "w"
             ) as out_file:
-                for snp in total_snps:
+                for snp in common_snps_list:
                     out_file.write(f"{snp}\n")
 
-        return total_snps
+        return common_snps_list
 
+    @beartype
     def merge_files(
         self,
         filepath: str,
@@ -211,23 +286,9 @@ class OtterSNP:
                 Defaults to True.
 
         Raises:
-            TypeError: If `filepath` is not of type str.
-            TypeError: If `outpath` is not None and not of type str.
-            TypeError: If `prefix` is not None and not of type str.
             FileNotFoundError: If no `.bed` files were found in `filepath`.
         """
-        if not isinstance(filepath, str):
-            raise TypeError(f"filepath not of type str. Got {type(filepath)}")
-        if outpath is not None and not isinstance(outpath, str):
-            raise TypeError(f"outpath not of type str. Got {type(outpath)}")
-        if not isinstance(prefix, str):
-            raise TypeError(f"prefix not of type str. Got {type(prefix)}")
-        if not isinstance(only_common, bool):
-            raise TypeError(
-                f"only_common not of type bol. Got {type(only_common)}"
-            )
-
-        # Initialize paths
+        # Handle outpath
         outpath = outpath or filepath
         if not os.path.isdir(outpath):
             os.makedirs(outpath)
@@ -271,6 +332,6 @@ class OtterSNP:
             if only_common is True
             else command
         )
-        subprocess.run(
-            command, capture_output=True, text=True, check=False  # noqa: S603
+        subprocess.run(  # noqa: S603
+            command, capture_output=True, text=True, check=False
         )

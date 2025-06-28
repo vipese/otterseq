@@ -30,9 +30,6 @@ class OtterPCA:
     _SUFFIXES: ClassVar[list[str]] = [".bim", ".bed", ".fam"]
     _PCA_SUFFIX: Literal[".eigenvec"] = ".eigenvec"
 
-    def __init__(self) -> None:  # noqa: D107
-        pass
-
     @beartype
     def pca(
         self,
@@ -77,8 +74,8 @@ class OtterPCA:
             "--pcs",
             str(n_pcs),
         ]
-        subprocess.run(
-            command, text=True, capture_output=True, check=False  # noqa: S603
+        subprocess.run(  # noqa: S603
+            command, text=True, capture_output=True, check=False
         )
 
     @beartype

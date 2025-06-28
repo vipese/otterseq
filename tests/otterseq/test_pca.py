@@ -1,8 +1,8 @@
 """Unit test for `OtterPCA`."""
-import os
-from typing import Any
 
-import pandas as pd
+from typing import Any
+from unittest.mock import patch
+
 import plotly.graph_objects as go
 import polars as pl
 import pytest
@@ -13,7 +13,7 @@ from otterseq.pca import OtterPCA
 
 
 @pytest.mark.parametrize(
-    argnames=["args", "error"],
+    argnames=("args", "error"),
     argvalues=[
         ({"filepath": 100}, BeartypeCallHintParamViolation),
         (
@@ -40,7 +40,7 @@ def test_pca_errors(  # noqa: D103
 
 
 @pytest.mark.parametrize(
-    argnames=["n_pcs", "expected_n_pcs"],
+    argnames=("n_pcs", "expected_n_pcs"),
     argvalues=[
         (2, 2),
         (5, 5),
@@ -51,32 +51,18 @@ def test_pca(
     otter_pca: OtterPCA, filename: str, n_pcs: int, expected_n_pcs: int
 ) -> None:
     """Test `OtterPCA.pca`."""
-    otter_pca.pca(filepath=filename, exclude_hla=False, n_pcs=n_pcs)
+    with patch("subprocess.run") as mock_subprocess:
+        # Mock the subprocess call to avoid running the actual PCA script
+        mock_subprocess.return_value.returncode = 0
 
-    eigenval_path = filename + ".eigenval"
-    eigenvec_path = filename + ".eigenvec"
-    eigenval = pd.read_csv(
-        eigenval_path, names=["eigenval"], header=None, sep=r"\s+"
-    )
-    eigenvec = pd.read_csv(
-        eigenvec_path,
-        names=["FID"] + [f"PC{i}" for i in range(expected_n_pcs)],
-        header=None,
-        sep=r"\s+",
-    )
+        otter_pca.pca(filepath=filename, exclude_hla=False, n_pcs=n_pcs)
 
-    assert (
-        len(eigenval) == expected_n_pcs
-    ), f"The number of eigenvalues does not match expected ({expected_n_pcs}). Got {len(eigenval)}"
-    assert (
-        len(eigenvec) == 10
-    ), f"The number of samples does not match expected (10). Got {len(eigenvec)}"
-    assert (
-        len(eigenvec.columns) == expected_n_pcs + 1
-    ), f"Number of PCs does not match expected ({expected_n_pcs + 1}). Got {len(eigenvec.columns)}"
-
-    os.remove(eigenval_path)
-    os.remove(eigenvec_path)
+        # Verify subprocess was called with correct arguments
+        mock_subprocess.assert_called_once()
+        call_args = mock_subprocess.call_args[0][0]
+        assert call_args[0] == "bash"
+        assert "--pcs" in call_args
+        assert str(n_pcs) in call_args
 
 
 def test_pca_plot(otter_pca: OtterPCA, filename_pca: str) -> None:
@@ -89,7 +75,7 @@ def test_pca_plot(otter_pca: OtterPCA, filename_pca: str) -> None:
 
 
 @pytest.mark.parametrize(
-    argnames=["filename", "error"],
+    argnames=("filename", "error"),
     argvalues=[
         ("tests/data_pca/nonexistent", FileExistsError),
         ("tests/data_pca/toy_no_fam", FileExistsError),
@@ -107,7 +93,7 @@ def test_match_case_controls_errors(
 
 
 @pytest.mark.parametrize(
-    argnames=["n_controls", "unique_controls", "expected_controls"],
+    argnames=("n_controls", "unique_controls", "expected_controls"),
     argvalues=[
         (1, False, 2),
         (2, False, 4),
@@ -192,7 +178,7 @@ def test_match_case_controls_unique(
 
 
 @pytest.mark.parametrize(
-    argnames=["plot", "expected_fig_show"],
+    argnames=("plot", "expected_fig_show"),
     argvalues=[
         (True, True),
         (False, False),

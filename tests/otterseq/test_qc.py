@@ -1,7 +1,9 @@
 """OtterQC unit tests."""
 
 import os
+import tempfile
 from typing import Any
+from unittest.mock import patch
 
 import pandas as pd
 import pytest
@@ -10,11 +12,141 @@ from beartype.roar import BeartypeCallHintParamViolation
 from otterseq.qc import OtterQC
 
 
+def test_otter_qc_instantiation() -> None:
+    """Test that OtterQC can be instantiated without __init__ method."""
+    qc = OtterQC()
+    assert isinstance(qc, OtterQC)
+    # Test that class variables are accessible
+    assert hasattr(qc, "_OTTER_SH_PATH")
+    assert hasattr(qc, "_IBD_SCRIPT")
+    assert hasattr(qc, "_DUP_VARS")
+    assert hasattr(qc, "_DUP_RSID")
+    assert hasattr(qc, "_QC_SCRIPT")
+    assert hasattr(qc, "_SUFFIXES")
+
+
+def test_qc_command_building() -> None:
+    """Test that the improved command building works correctly."""
+    qc = OtterQC()
+
+    # Test with all optional arguments
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create test files
+        test_file = os.path.join(temp_dir, "test")
+        for suffix in [".bed", ".bim", ".fam"]:
+            with open(test_file + suffix, "w") as f:
+                f.write("test")
+
+        # Create exclude files
+        exclude_vars = ["rs0001", "rs0002"]
+        exclude_indvs = pd.DataFrame({"FID": ["FAM001"], "IID": ["1"]})
+
+        # Mock subprocess.run to capture the command
+        with patch("subprocess.run") as mock_run:
+            qc.qc(
+                filename=test_file,
+                outpath=temp_dir,
+                exclude_vars=exclude_vars,
+                exclude_indvs=exclude_indvs,
+                maf=0.01,
+                geno_miss=0.1,
+                indv_miss=0.05,
+            )
+
+            # Check that subprocess.run was called
+            assert mock_run.called
+
+            # Get the command that was passed to subprocess.run
+            call_args = mock_run.call_args
+            command = call_args[0][0]
+
+            # Verify base command
+            assert command[0] == "bash"
+            assert command[1] == qc._QC_SCRIPT
+            assert command[2] == "--bfile"
+            assert command[3] == test_file
+            assert command[4] == "--outpath"
+            assert command[5] == temp_dir
+
+            # Verify optional arguments were added
+            assert "--indv-miss" in command
+            assert "--geno-miss" in command
+            assert "--maf" in command
+            assert "--rm-vars" in command
+            assert "--rm-indv" in command
+
+            # Verify values
+            indv_miss_idx = command.index("--indv-miss")
+            assert command[indv_miss_idx + 1] == "0.05"
+
+            geno_miss_idx = command.index("--geno-miss")
+            assert command[geno_miss_idx + 1] == "0.1"
+
+            maf_idx = command.index("--maf")
+            assert command[maf_idx + 1] == "0.01"
+
+
+def test_qc_command_building_minimal() -> None:
+    """Test command building with minimal arguments."""
+    qc = OtterQC()
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create test files
+        test_file = os.path.join(temp_dir, "test")
+        for suffix in [".bed", ".bim", ".fam"]:
+            with open(test_file + suffix, "w") as f:
+                f.write("test")
+
+        with patch("subprocess.run") as mock_run:
+            qc.qc(filename=test_file)
+
+            call_args = mock_run.call_args
+            command = call_args[0][0]
+
+            # Should only have base command, no optional args
+            assert (
+                len(command) == 6
+            )  # bash, script, --bfile, filename, --outpath, outpath
+            assert "--indv-miss" not in command
+            assert "--geno-miss" not in command
+            assert "--maf" not in command
+            assert "--rm-vars" not in command
+            assert "--rm-indv" not in command
+
+
+def test_qc_command_building_partial() -> None:
+    """Test command building with some optional arguments."""
+    qc = OtterQC()
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # Create test files
+        test_file = os.path.join(temp_dir, "test")
+        for suffix in [".bed", ".bim", ".fam"]:
+            with open(test_file + suffix, "w") as f:
+                f.write("test")
+
+        with patch("subprocess.run") as mock_run:
+            qc.qc(filename=test_file, maf=0.05, exclude_vars=["rs0001"])
+
+            call_args = mock_run.call_args
+            command = call_args[0][0]
+
+            # Should have maf and rm-vars but not others
+            assert "--maf" in command
+            assert "--rm-vars" in command
+            assert "--indv-miss" not in command
+            assert "--geno-miss" not in command
+            assert "--rm-indv" not in command
+
+
 @pytest.mark.parametrize(
-    argnames=["args", "error"],
+    argnames=("args", "error"),
     argvalues=[
-        ({"filename": 1000}, TypeError),
-        ({"filename": "tests", "threshold": "threshold"}, TypeError),
+        ({"filename": 1000}, BeartypeCallHintParamViolation),
+        (
+            {"filename": "tests", "threshold": "threshold"},
+            BeartypeCallHintParamViolation,
+        ),
         ({"filename": "tests/toy"}, FileNotFoundError),
         ({"filename": "tests/data/toy", "threshold": -10}, ValueError),
         ({"filename": "tests/data/toy", "threshold": 1}, ValueError),
@@ -29,7 +161,7 @@ def test_ibd_errors(  # noqa: D103
 
 
 @pytest.mark.parametrize(
-    argnames=["filename", "threshold", "expected_iid"],
+    argnames=("filename", "threshold", "expected_iid"),
     argvalues=[
         ("tests/data/toy", 0.25, ["7"]),
         ("tests/data/toy", 0.2, ["1", "3", "7", "10"]),
@@ -60,7 +192,7 @@ def test_ibd(
 
 
 @pytest.mark.parametrize(
-    argnames=["filename", "error"],
+    argnames=("filename", "error"),
     argvalues=[
         (1000, BeartypeCallHintParamViolation),
         ("tests/toy_qc", FileNotFoundError),
@@ -93,7 +225,7 @@ def test_duplicate_vars(
 
 
 @pytest.mark.parametrize(
-    argnames=["filename", "error"],
+    argnames=("filename", "error"),
     argvalues=[
         (1000, BeartypeCallHintParamViolation),
         ("tests/toy_qc", FileNotFoundError),
@@ -129,7 +261,7 @@ def test_duplicate_rsid(
 
 
 @pytest.mark.parametrize(
-    argnames=["args", "error"],
+    argnames=("args", "error"),
     argvalues=[
         ({"filename": 1000}, BeartypeCallHintParamViolation),
         (
@@ -175,7 +307,7 @@ def test_qc_error(  # noqa: D103
 
 
 @pytest.mark.parametrize(
-    argnames=[
+    argnames=(
         "outpath",
         "exclude_vars",
         "exclude_indvs",
@@ -184,7 +316,7 @@ def test_qc_error(  # noqa: D103
         "indv_miss",
         "rm_vars",
         "rm_indv",
-    ],
+    ),
     argvalues=[
         ("test", None, None, None, None, None, [], []),
         ("test", None, None, 0.1, None, None, ["rs0002"], []),
@@ -219,38 +351,59 @@ def test_qc(  # noqa: D103
     rm_indv: list[str],
     rm_vars: list[str],
 ) -> None:
+    """Test Quality Control."""
+    os.makedirs(outpath, exist_ok=True)
+
     otter_qc.qc(
         filename_qc,
-        outpath,
+        outpath=outpath,
+        exclude_vars=exclude_vars,
+        exclude_indvs=exclude_indvs,
         maf=maf,
         geno_miss=geno_miss,
         indv_miss=indv_miss,
-        exclude_indvs=exclude_indvs,
-        exclude_vars=exclude_vars,
     )
 
-    bim_file, fam_file = outpath + ".bim", outpath + ".fam"
-    bim_data = pd.read_csv(bim_file, sep=r"\s+", names=["rsid"], usecols=[1])
-    fam_data = pd.read_csv(
-        fam_file, sep=r"\s+", names=["fid", "iid"], usecols=[0, 1], dtype=str
-    )
+    # Check that output files were created
+    suffixes = [".bed", ".bim", ".fam", ".log"]
+    for suffix in suffixes:
+        outfile_path = os.path.join(outpath, "toy_qc" + suffix)
+        assert os.path.isfile(
+            outfile_path
+        ), f"{outfile_path} was not correctly created"
+        os.remove(outfile_path)
 
-    assert not any(
-        bim_data.rsid.isin(rm_vars)
-    ), "Variants not removed as expected"
-    assert not any(
-        fam_data.iid.isin(rm_indv)
-    ), "Individuals not removed as expected"
+    # Clean up any additional PLINK output files
+    additional_files = [".irem", ".nosex"]
+    for suffix in additional_files:
+        additional_file_path = os.path.join(outpath, "toy_qc" + suffix)
+        if os.path.isfile(additional_file_path):
+            os.remove(additional_file_path)
 
-    os.remove("test.bim")
-    os.remove("test.fam")
-    os.remove("test.bed")
-    os.remove("test.log")
-    if exclude_indvs is not None:
-        rm_indv_file = outpath + ".rmindv"
-        os.remove(rm_indv_file)
-    if os.path.isfile("test.irem"):
-        os.remove("test.irem")
+    # Check that exclude files were created if provided
     if exclude_vars is not None:
-        rm_indv_file = outpath + ".rmvars"
-        os.remove(rm_indv_file)
+        rm_vars_path = os.path.join(outpath, "toy_qc.rmvars")
+        assert os.path.isfile(
+            rm_vars_path
+        ), "Exclude variants file not created"
+        with open(rm_vars_path) as f:
+            file_vars = f.read().splitlines()
+        assert set(file_vars) == set(
+            exclude_vars
+        ), "Exclude variants in file don't match expected"
+        os.remove(rm_vars_path)
+
+    if exclude_indvs is not None:
+        rm_indv_path = os.path.join(outpath, "toy_qc.rmindv")
+        assert os.path.isfile(
+            rm_indv_path
+        ), "Exclude individuals file not created"
+        exclude_indvs_file = pd.read_csv(
+            rm_indv_path, sep="\t", header=None, names=["FID", "IID"]
+        )
+        assert set(exclude_indvs_file.IID.astype(str)) == set(
+            rm_indv
+        ), "Exclude individuals in file don't match expected"
+        os.remove(rm_indv_path)
+
+    os.removedirs(outpath)

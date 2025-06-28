@@ -1,4 +1,5 @@
 """Util functions sub-module used in otterseq."""
+
 import os
 
 import polars as pl
@@ -41,10 +42,17 @@ def read_pca_file(filename: str) -> pl.DataFrame:
     if not os.path.isfile(filename):
         raise FileNotFoundError(f"{filename} not found.")
 
-    pca_df = pl.read_csv(filename, has_header=False, separator=" ")
+    pca_df = pl.read_csv(
+        filename,
+        has_header=False,
+        separator=" ",
+    )
     pca_df.columns = ["fid", "iid"] + [
         f"pc{i}" for i in range(1, len(pca_df.columns) - 1)
     ]
+    pca_df = pca_df.with_columns(
+        [pl.col("fid").cast(pl.Utf8), pl.col("iid").cast(pl.Utf8)]
+    )
 
     return pca_df
 
@@ -75,14 +83,17 @@ def read_fam_file(filename: str, vars_to_string: bool = True) -> pl.DataFrame:
         filename,
         has_header=False,
         separator=" ",
-        new_columns=[
-            "fid",
-            "iid",
-            "father_id",
-            "mother_id",
-            "sex",
-            "pheno",
-        ],
+    )
+    fam_df.columns = ["fid", "iid", "father_id", "mother_id", "sex", "pheno"]
+    fam_df = fam_df.with_columns(
+        [
+            pl.col("fid").cast(pl.Utf8),
+            pl.col("iid").cast(pl.Utf8),
+            pl.col("father_id").cast(pl.Int64),
+            pl.col("mother_id").cast(pl.Int64),
+            pl.col("sex").cast(pl.Int64),
+            pl.col("pheno").cast(pl.Int64),
+        ]
     )
 
     if vars_to_string:

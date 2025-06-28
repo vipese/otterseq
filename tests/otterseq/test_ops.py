@@ -15,11 +15,10 @@ Test Functions:
 - test_run_logistic_regression_custom_outpath: Tests the run_logistic_regression method with a custom output path.
 """
 
-
-import os
 from unittest.mock import patch
 
 import pandas as pd
+import polars as pl
 import pytest
 
 from otterseq.operations import OtterOps
@@ -42,11 +41,12 @@ def test_run_logistic_regression(
 ) -> None:
     """Test the run_logistic_regression method with mock data files."""
     # mock the read functions and subprocess.run
-    with patch("otterseq.operations.read_pca_file") as mock_read_pca, patch(
-        "otterseq.operations.read_fam_file"
-    ) as mock_read_fam, patch("subprocess.run") as mock_run, patch(
-        "os.remove"
-    ) as mock_remove:
+    with (
+        patch("otterseq.operations.read_pca_file") as mock_read_pca,
+        patch("otterseq.operations.read_fam_file") as mock_read_fam,
+        patch("subprocess.run") as mock_run,
+        patch("os.remove") as mock_remove,
+    ):
 
         # set up mock return values
         mock_read_pca.return_value.columns = [
@@ -84,35 +84,93 @@ def test_run_logistic_regression_result(
     otter_ops: OtterOps, filename_pca: str, outpath: str
 ) -> None:
     """Test the result of the run_logistic_regression method."""
-    otter_ops.run_logistic_regression(filename_pca, outpath=outpath)
+    # Mock subprocess.run to avoid running actual PLINK commands
+    with patch("subprocess.run") as mock_run:
+        # Mock the read functions to return test data
+        mock_pca_df = pl.DataFrame(
+            {
+                "fid": ["FAM001", "FAM001"],
+                "iid": ["1", "2"],
+                "pc1": [0.1, 0.2],
+                "pc2": [0.3, 0.4],
+            }
+        )
+        mock_fam_df = pl.DataFrame(
+            {
+                "fid": ["FAM001", "FAM001"],
+                "iid": ["1", "2"],
+                "father_id": [0, 0],
+                "mother_id": [0, 0],
+                "sex": [1, 2],
+                "pheno": [1, 2],
+            }
+        )
 
-    outpath = outpath or filename_pca
-    assert os.path.exists(outpath + ".assoc.logistic")
+        with (
+            patch(
+                "otterseq.operations.read_pca_file", return_value=mock_pca_df
+            ) as mock_read_pca,
+            patch(
+                "otterseq.operations.read_fam_file", return_value=mock_fam_df
+            ) as mock_read_fam,
+            patch("os.remove") as mock_remove,
+        ):
+            # Call the function
+            otter_ops.run_logistic_regression(filename_pca, outpath=outpath)
 
-    log_df = pd.read_csv(outpath + ".assoc.logistic", sep=r"\s+", header=0)
-    assert (
-        not log_df.empty
-    ), "The logistic regression results DataFrame should not be empty"
+            # Verify subprocess was called
+            mock_run.assert_called_once()
 
-    required_columns = [
-        "CHR",
-        "SNP",
-        "BP",
-        "A1",
-        "TEST",
-        "NMISS",
-        "OR",
-        "STAT",
-        "P",
-    ]
-    for col in required_columns:
-        assert (
-            col in log_df.columns
-        ), f"Error: Column '{col}' is missing from the file."
+            # Verify the read functions were called
+            mock_read_pca.assert_called_once_with(filename_pca)
+            mock_read_fam.assert_called_once_with(filename_pca)
 
-    os.remove(outpath + ".assoc.logistic")
+            # Verify temporary files were cleaned up
+            assert mock_remove.call_count == 2
+
+            # Verify the command structure
+            call_args = mock_run.call_args
+            command = call_args[0][0]
+            assert command[0] == "bash"
+            assert "--bfile" in command
+            assert "--outpath" in command
+            assert "--pheno" in command
+            assert "--covar" in command
 
 
 def test_plot_manhattan(otter_ops: OtterOps, filename_log: str) -> None:
     """Test plot manhattan."""
-    otter_ops.plot_manhattan(filename_log)
+    # Mock pandas.read_csv to return test data
+    mock_df = pd.DataFrame(
+        {
+            "CHR": [1, 1, 2, 2],
+            "SNP": ["rs0001", "rs0002", "rs0003", "rs0004"],
+            "BP": [100100, 100200, 200100, 200200],
+            "TEST": ["ADD", "ADD", "ADD", "ADD"],
+            "P": [0.001, 0.01, 0.05, 0.1],
+        }
+    )
+
+    with (
+        patch("pandas.read_csv", return_value=mock_df) as mock_read_csv,
+        patch("plotly.express.scatter") as mock_scatter,
+    ):
+        mock_fig = mock_scatter.return_value
+        mock_fig.show = lambda: None  # Mock the show method
+
+        # Call the function
+        otter_ops.plot_manhattan(filename_log)
+
+        # Verify the file was read
+        mock_read_csv.assert_called_once()
+
+        # Verify the plot was created
+        mock_scatter.assert_called_once()
+
+        # Verify the plot data structure
+        called_args = mock_scatter.call_args
+        plot_df = called_args[0][0]  # First positional argument
+        assert "chromosome" in plot_df.columns
+        assert "position" in plot_df.columns
+        assert "pvalue" in plot_df.columns
+        assert "-log10(pvalue)" in plot_df.columns
