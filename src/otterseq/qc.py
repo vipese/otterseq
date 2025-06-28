@@ -32,36 +32,34 @@ class OtterQC:
     def ibd(
         self, filename: str, threshold: float | int = 0.25
     ) -> pd.DataFrame:
-        """Compute Inheritance By Descent (IBD).
+        """Compute Identity By Descent (IBD) between individuals.
 
-        This function leverages PLINK2.0 to compute IBD on a provided filename
-        path (path to file with prefix and no suffix, such as "data/toy"). The output
-        is written in the same directory as the input file ("data/toy.kin0").
+        This function computes the IBD between individuals using PLINK2. It
+        creates a KING table and then applies a threshold to identify related
+        individuals.
 
         Args:
             filename (str): Path to the file with prefix (e.g. `data/toy`,
                 where the "data" folder contains a "toy.map", "toy.bed", and
                 "toy.bim" file).
-            threshold (float | int): Kinship threshold used to filter out
-                individuals.
-
-        Raises:
-            TypeError: If `filename` is not of type str.
-            TypeError: If `threshold` is not of type int | float.
-            FileNotFoundError: If `.bed` are found in the provided `filename`.
-            ValueError: If `threshold` is not in between 0 and 1 (included).
+            threshold (float | int): Threshold for IBD. Must be between 0 and 1.
 
         Returns:
-            pd.DataFrame: DataFrame containing the FID and IID of the excluded
-                individuals.
+            pd.DataFrame: DataFrame with the FID and IID of individuals that
+                exceed the threshold.
+
+        Raises:
+            FileNotFoundError: If the file does not exist.
+            ValueError: If the threshold is not in the range (0, 1).
         """
         # Enforce logic
-        if not os.path.isfile(filename + ".bed"):
-            raise FileNotFoundError(f"{filename}.bed file not found.")
-        if not 0 <= threshold < 1:
+        if not 0 < threshold < 1:
             raise ValueError(f"threshold not in range (0,1). Got {threshold}")
 
-        # Compute IBD
+        for suf in self._SUFFIXES:
+            if not os.path.isfile(filename + suf):
+                raise FileNotFoundError(f"{filename}{suf} not found")
+
         command = [
             "bash",
             self._IBD_SCRIPT,
@@ -70,9 +68,7 @@ class OtterQC:
             "--threshold",
             str(threshold),
         ]
-        subprocess.run(  # noqa: S603
-            command, capture_output=True, text=True, check=False
-        )
+        subprocess.run(command, check=False)  # noqa: S603
 
         # Return filtered out patients
         indv_out = pd.read_csv(

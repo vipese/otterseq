@@ -1,6 +1,6 @@
-PLINK2_LINUX_URL = https://s3.amazonaws.com/plink2-assets/plink2_linux_x86_64_20230726.zip
+PLINK2_LINUX_URL = https://s3.amazonaws.com/plink2-assets/plink2_linux_x86_64_20250627.zip
 PLINK2_DARWIN_URL = https://s3.amazonaws.com/plink2-assets/alpha6/plink2_mac_arm64_20250627.zip
-PLINK1_LINUX_URL = https://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20201019.zip
+PLINK1_LINUX_URL = https://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20240818.zip
 PLINK1_DARWIN_URL = https://s3.amazonaws.com/plink1-assets/plink_mac_20201019.zip
 
 PLINK2 = bin/plink2
@@ -41,10 +41,10 @@ install_plink1:
 		echo "Detected Linux $(ARCH)"; \
 		echo "Downloading and installing PLINK 1.9..."; \
 		curl -LO $(PLINK1_LINUX_URL); \
-		unzip plink_linux_x86_64_20201019.zip; \
+		unzip plink_linux_x86_64_20240818.zip; \
 		mv plink $(PLINK1); \
 		chmod +x $(PLINK1); \
-		rm plink_linux_x86_64_20201019.zip; \
+		rm plink_linux_x86_64_20240818.zip; \
 		echo "PLINK 1.9 installation completed."; \
 	elif [ "$(UNAME_S)" = "Darwin" ]; then \
 		echo "Detected macOS $(ARCH)"; \
@@ -65,10 +65,10 @@ install_plink2:
 		echo "Detected Linux $(ARCH)"; \
 		echo "Downloading and installing PLINK 2.0..."; \
 		curl -LO $(PLINK2_LINUX_URL); \
-		unzip plink2_linux_x86_64_20230726.zip; \
+		unzip plink2_linux_x86_64_20250627.zip; \
 		mv plink2 $(PLINK2); \
 		chmod +x $(PLINK2); \
-		rm plink2_linux_x86_64_20230726.zip; \
+		rm plink2_linux_x86_64_20250627.zip; \
 		rm -f prettify; \
 		rm -f toy.map; \
 		rm -f toy.ped; \
