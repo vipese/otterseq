@@ -111,3 +111,8 @@ def test_run_logistic_regression_result(
         ), f"Error: Column '{col}' is missing from the file."
 
     os.remove(outpath + ".assoc.logistic")
+
+
+def test_plot_manhattan(otter_ops: OtterOps, filename_log: str) -> None:
+    """Test plot manhattan."""
+    otter_ops.plot_manhattan(filename_log)

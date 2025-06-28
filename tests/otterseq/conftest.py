@@ -81,6 +81,12 @@ def filepath_pca() -> str:
 
 
 @pytest.fixture()
+def filepath_log() -> str:
+    """Path to logistic regression files."""
+    return "tests/data_log/"
+
+
+@pytest.fixture()
 def filename(filepath: str) -> str:
     """Path fo PLINK1.9 file."""
     return os.path.join(filepath, "toy")
@@ -102,6 +108,12 @@ def filename_qc(filepath_qc: str) -> str:
 def filename_pca(filepath_pca: str) -> str:
     """Path fo PLINK1.9 file."""
     return os.path.join(filepath_pca, "toy")
+
+
+@pytest.fixture()
+def filename_log(filepath_log: str) -> str:
+    """Path to results of logistic regression."""
+    return os.path.join(filepath_log, "toy")
 
 
 @pytest.fixture()
