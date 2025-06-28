@@ -48,11 +48,16 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-plink --bfile "${bfile}" \
+# Extract basename from input file
+basename=$(basename "$bfile")
+outfile="${outpath}/${basename}"
+
+# shellcheck disable=SC2046
+bin/plink --bfile "${bfile}" \
       $([ -n "${geno_miss}" ] && echo "--geno ${geno_miss}") \
       $([ -n "${indv_miss}" ] && echo "--mind ${indv_miss}") \
       $([ -n "${maf}" ] && echo "--maf ${maf}") \
       $([ -n "${rm_indv}" ] && echo "--remove ${rm_indv}") \
       $([ -n "${rm_vars}" ] && echo "--exclude ${rm_vars}") \
       --make-bed \
-      --out "${outpath}"
+      --out "${outfile}"

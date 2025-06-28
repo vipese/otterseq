@@ -34,7 +34,7 @@ done
 
 
 # Run logistic regression -- association analysis
-plink --bfile "${bfile}" \
+bin/plink --bfile "${bfile}" \
       --pheno "${pheno}" \
       --covar "${covar}" \
       --logistic \

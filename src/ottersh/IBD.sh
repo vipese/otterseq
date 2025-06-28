@@ -23,5 +23,5 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Compute IBD
-plink2 --bfile "$bfile" --make-king-table --out "$bfile"
-plink2  --bfile "$bfile" --king-cutoff-table "$bfile".kin0 "$threshold" --out "$bfile"
+bin/plink2 --bfile "$bfile" --make-king-table --out "$bfile"
+bin/plink2  --bfile "$bfile" --king-cutoff-table "$bfile".kin0 "$threshold" --out "$bfile"

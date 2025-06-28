@@ -29,9 +29,6 @@ class OtterOps:
     _PCA_SUFFIX: Literal[".eigenvec"] = ".eigenvec"
     _LOGISTIC_SUFFIX: Literal[".assoc.logistic"] = ".assoc.logistic"
 
-    def __init__(self) -> None:
-        """Initialize the OtterOps class."""
-
     @beartype
     def run_logistic_regression(
         self, filename: str, outpath: str | None = None
@@ -97,8 +94,8 @@ class OtterOps:
             "--covar",
             temp_covars_path,
         ]
-        subprocess.run(
-            cmd, check=False, text=True, capture_output=True  # noqa: S603
+        subprocess.run(  # noqa: S603
+            cmd, check=False, text=True, capture_output=True
         )
 
         # Remove temporary files

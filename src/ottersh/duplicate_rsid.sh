@@ -17,4 +17,4 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-plink2 --bfile "${bfile}" --rm-dup 'list' --out "${bfile}"
+bin/plink2 --bfile "${bfile}" --rm-dup 'list' --out "${bfile}"

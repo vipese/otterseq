@@ -25,7 +25,7 @@ done
 # For each file, binarize
 filename=$(basename "$file")
 outfile=${outpath}/${filename}
-plink2 --pedmap "${file}" --make-bed --out "${outfile}" --silent
+bin/plink2 --pedmap "${file}" --make-bed --out "${outfile}" --silent
 
 # Print 
 echo "Files binarized"

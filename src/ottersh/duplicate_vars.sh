@@ -18,5 +18,5 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Duplicated by variant and coordinates
-plink --bfile "${bfile}" --list-duplicate-vars suppress-first \
+bin/plink --bfile "${bfile}" --list-duplicate-vars suppress-first \
     --allow-no-sex --out "${bfile}" --silent 

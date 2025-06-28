@@ -7,6 +7,7 @@ Supported functionalities are:
 - Quality Control, encompassing MAF, missing genotyping and individual rates,
     exclusion of variants and individuals filtering.
 """
+
 import os
 import subprocess
 from typing import ClassVar
@@ -27,9 +28,7 @@ class OtterQC:
     _QC_SCRIPT = os.path.join(_OTTER_SH_PATH, "qc.sh")
     _SUFFIXES: ClassVar[list[str]] = [".bim", ".bed", ".fam"]
 
-    def __init__(self) -> None:  # noqa: D107
-        pass
-
+    @beartype
     def ibd(
         self, filename: str, threshold: float | int = 0.25
     ) -> pd.DataFrame:
@@ -56,12 +55,7 @@ class OtterQC:
             pd.DataFrame: DataFrame containing the FID and IID of the excluded
                 individuals.
         """
-        if not isinstance(filename, str):
-            raise TypeError(f"filepath not of type str. Got {type(filename)}")
-        if not isinstance(threshold, float | int):
-            raise TypeError(
-                f"threshold not of type int or float. Got {type(threshold)}"
-            )
+        # Enforce logic
         if not os.path.isfile(filename + ".bed"):
             raise FileNotFoundError(f"{filename}.bed file not found.")
         if not 0 <= threshold < 1:
@@ -76,8 +70,8 @@ class OtterQC:
             "--threshold",
             str(threshold),
         ]
-        subprocess.run(
-            command, capture_output=True, text=True, check=False  # noqa: S603
+        subprocess.run(  # noqa: S603
+            command, capture_output=True, text=True, check=False
         )
 
         # Return filtered out patients
@@ -135,8 +129,8 @@ class OtterQC:
 
         basename = os.path.splitext(filename)[0]
         command = ["bash", self._DUP_VARS, "--bfile", basename]
-        subprocess.run(
-            command, capture_output=True, text=True, check=False  # noqa: S603
+        subprocess.run(  # noqa: S603
+            command, capture_output=True, text=True, check=False
         )
 
         dup_vars_df = pd.read_csv(
@@ -191,8 +185,8 @@ class OtterQC:
 
         basename = os.path.splitext(filename)[0]
         command = ["bash", self._DUP_RSID, "--bfile", basename]
-        subprocess.run(
-            command, capture_output=True, text=True, check=False  # noqa: S603
+        subprocess.run(  # noqa: S603
+            command, capture_output=True, text=True, check=False
         )
 
         dup_rsid_df = pd.read_csv(
@@ -225,7 +219,7 @@ class OtterQC:
         return dup_data
 
     @beartype
-    def qc(  # noqa: D102
+    def qc(  # noqa: C901
         self,
         filename: str,
         outpath: str | None = None,
@@ -235,7 +229,26 @@ class OtterQC:
         geno_miss: float | int | None = None,
         indv_miss: float | int | None = None,
     ) -> None:
+        """Quality Control on PLINK files.
 
+        This function runs a quality control on a PLINK file. It can be used to
+        exclude variants and individuals based on missing genotyping rates,
+        missing individual rates, and minor allele frequency.
+
+        Args:
+            filename (str): Path to the file with prefix (e.g. `data/toy`,
+                where the "data" folder contains a "toy.map", "toy.bed", and
+                "toy.bim" file).
+            outpath (str | None): Path to the directory where the output should
+                be written. If None, uses `filename`.
+            exclude_vars (list[str] | None): List of variants to exclude.
+            exclude_indvs (pd.DataFrame | None): DataFrame with the FID and IID
+                of individuals to exclude.
+            maf (float | int | None): Minor allele frequency threshold.
+            geno_miss (float | int | None): Missing genotyping rate threshold.
+            indv_miss (float | int | None): Missing individual rate threshold.
+        """
+        # Enforce logic
         if maf is not None and not 0 < maf < 0.5:
             raise ValueError(f"maf not in range (0,1). Got {maf}")
         if geno_miss is not None and not 0 <= geno_miss <= 1:
@@ -247,20 +260,24 @@ class OtterQC:
             if not os.path.isfile(filename + suf):
                 raise FileNotFoundError(f"{filename}{suf} not found")
 
-        outpath = outpath or filename
+        outpath = outpath or os.path.dirname(filename) or "."
+
+        # Extract basename from input file for exclude files
+        basename = os.path.basename(filename)
 
         if exclude_vars is not None:
-            rm_vars_path = outpath + ".rmvars"
+            rm_vars_path = os.path.join(outpath, basename + ".rmvars")
             with open(rm_vars_path, "w") as f:
                 for var in exclude_vars:
                     f.write(f"{var}\n")
 
         if exclude_indvs is not None:
-            rm_indv_path = outpath + ".rmindv"
+            rm_indv_path = os.path.join(outpath, basename + ".rmindv")
             exclude_indvs.to_csv(
                 rm_indv_path, sep="\t", header=False, index=False
             )
 
+        # Build command
         command = [
             "bash",
             self._QC_SCRIPT,
@@ -269,24 +286,21 @@ class OtterQC:
             "--outpath",
             outpath,
         ]
-        command = (
-            [*command, "--indv-miss", str(indv_miss)] if indv_miss else command
-        )
-        command = (
-            [*command, "--geno-miss", str(geno_miss)] if geno_miss else command
-        )
-        command = [*command, "--maf", str(maf)] if maf else command
-        command = (
-            [*command, "--rm-vars", rm_vars_path]
-            if exclude_vars is not None
-            else command
-        )
-        command = (
-            [*command, "--rm-indv", rm_indv_path]
-            if exclude_indvs is not None
-            else command
-        )
 
-        subprocess.run(
-            command, capture_output=True, text=True, check=False  # noqa: S603
+        # Add optional arguments
+        optional_args = [
+            ("--indv-miss", indv_miss),
+            ("--geno-miss", geno_miss),
+            ("--maf", maf),
+            ("--rm-vars", rm_vars_path if exclude_vars is not None else None),
+            ("--rm-indv", rm_indv_path if exclude_indvs is not None else None),
+        ]
+
+        # Flatten the optional arguments
+        for flag, value in optional_args:
+            if value is not None:
+                command.extend([flag, str(value)])
+
+        subprocess.run(  # noqa: S603
+            command, capture_output=True, text=True, check=False
         )
